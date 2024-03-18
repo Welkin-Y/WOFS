@@ -21,40 +21,50 @@
 
 class Meta {
 
-    std::string name;
+    std::string name; // full path
     long size;
     unsigned int permission;
     unsigned int owner;
     unsigned int group;
+    bool isDir;
 public:
-    Meta(std::string name, long size, unsigned int permission, unsigned int owner, unsigned int group);
+    Meta(std::string name, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir);
     std::string getName();
     long getSize();
     unsigned int getPermission();
     unsigned int getOwner();
     unsigned int getGroup();
+    bool isDirectory();
 };
 
 
-template <typename T>
+
 class TreeNode {
 
-    T v; // replace with metadata
+    Meta m;
+    void* data;
     TreeNode* child;
     TreeNode* sibling;
 public:
 
-    TreeNode(T v);
-    TreeNode(T v, TreeNode* child, TreeNode* sibling);
-    T getV();
+    TreeNode(Meta m);
+    TreeNode(Meta m, TreeNode* child, TreeNode* sibling);
+    Meta getMeta();
 
     // in case needed
-    int updateV(T v);
+    int updateMeta(Meta v);
+
+    TreeNode* find(const std::string& name);
 
     int setChild(TreeNode* child);
     int setSibling(TreeNode* sibling);
     TreeNode* getChild();
     TreeNode* getSibling();
+
+    std::vector<TreeNode*> getAllChildren();
+
+
+    void* getData();
 };
 
 

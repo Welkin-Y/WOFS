@@ -1,63 +1,94 @@
 #include "utils.hpp"
 
-Meta::Meta(std::string name,
+
+Meta::Meta(
+    std::string name,
     long size,
     unsigned int permission,
     unsigned int owner,
-    unsigned int group) : name(name), size(size), permission(permission), owner(owner), group(group) {}
+    unsigned int group,
+    bool isDir) : name(name), size(size), permission(permission), owner(owner), group(group), isDir(isDir) {}
 
 std::string Meta::getName() { return this->name; }
 long Meta::getSize() { return this->size; }
 unsigned int Meta::getPermission() { return this->permission; }
 unsigned int Meta::getOwner() { return this->owner; }
 unsigned int Meta::getGroup() { return this->group; }
+bool Meta::isDirectory() { return this->isDir; }
 
-template <typename T>
-TreeNode<T>::TreeNode(T v) {
-    this->v = v;
-    this->child = nullptr;
-    this->sibling = nullptr;
+TreeNode::TreeNode(Meta m) : m(m), child(nullptr), sibling(nullptr) {}
+TreeNode::TreeNode(Meta m, TreeNode* child, TreeNode* sibling) : m(m), child(child), sibling(sibling) {
+
+    if (!m.isDirectory() && child != nullptr) {
+        fprintf(stderr, "Error: trying to set child of a non-directory node\n");
+        this->child = nullptr;
+    }
 }
 
-template <typename T>
-TreeNode<T>::TreeNode(T v, TreeNode* child, TreeNode* sibling) {
-    this->v = v;
-    this->child = child;
-    this->sibling = sibling;
-}
-
-template <typename T>
-T TreeNode<T>::getV() {
-    return this->v;
-}
-
-template <typename T>
-int TreeNode<T>::updateV(T v) {
-    this->v = v;
+Meta TreeNode::getMeta() { return this->m; }
+int TreeNode::updateMeta(Meta v) {
+    this->m = v;
     return 0;
 }
-
-template <typename T>
-int TreeNode<T>::setChild(TreeNode* child) {
+int TreeNode::setChild(TreeNode* child) {
+    if (!this->getMeta().isDirectory()) {
+        fprintf(stderr, "Error: trying to set child of a non-directory node\n");
+        return -1;
+    }
     this->child = child;
     return 0;
 }
-
-template <typename T>
-int TreeNode<T>::setSibling(TreeNode* sibling) {
+int TreeNode::setSibling(TreeNode* sibling) {
     this->sibling = sibling;
     return 0;
 }
 
-template <typename T>
-TreeNode<T>* TreeNode<T>::getChild() {
-    return this->child;
+TreeNode* TreeNode::getChild() { return this->child; }
+TreeNode* TreeNode::getSibling() { return this->sibling; }
+
+std::vector<TreeNode*> TreeNode::getAllChildren() {
+    std::vector<TreeNode*> children;
+    TreeNode* current = this->child;
+    while (current != nullptr) {
+        children.push_back(current);
+        current = current->getSibling();
+    }
+    return children;
+
 }
 
-template <typename T>
-TreeNode<T>* TreeNode<T>::getSibling() {
-    return this->sibling;
+void* TreeNode::getData() { return this->data; }
+
+
+
+TreeNode* TreeNode::find(const std::string& name) {
+    std::string n;
+    if (name.at(0) == '/') {
+        n = name.substr(1);
+    }
+    else {
+        n = name;
+    }
+    if (this->m.getName() == n) {
+        return this;
+    }
+    TreeNode* t;
+    if (this->child != nullptr) {
+        t = this->child->find(n);
+        if (t != nullptr) {
+            return t;
+        }
+    }
+    if (this->sibling != nullptr) {
+        t = this->sibling->find(n);
+        if (t != nullptr) {
+            return t;
+        }
+    }
+    return nullptr;
 }
+
+
 
 std::vector<Meta> allFiles(const std::string& directory) {
     std::vector<Meta> files;
@@ -71,14 +102,14 @@ std::vector<Meta> allFiles(const std::string& directory) {
 
             if (ent->d_type == DT_REG) {
                 // file 
-                Meta m = Meta((directory + "/" + ent->d_name), st.st_size, st.st_mode, st.st_uid, st.st_gid);
+                Meta m = Meta((directory + "/" + ent->d_name), st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
                 files.push_back(m);
             }
 
             if (ent->d_type == DT_DIR) {
                 // dir
                 if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                    Meta m = Meta((directory + "/" + ent->d_name), st.st_size, st.st_mode, st.st_uid, st.st_gid);
+                    Meta m = Meta((directory + "/" + ent->d_name), st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
                     files.push_back(m);
                     std::vector<Meta> sub =
                         allFiles(directory + "/" + ent->d_name);
