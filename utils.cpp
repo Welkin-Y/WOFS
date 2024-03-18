@@ -12,6 +12,7 @@ Meta::Meta(
     bool isDir,
     time_t lastModified) : name(name), start(start), size(size), permission(permission), owner(owner), group(group), isDir(isDir), lastModified(lastModified) {}
 
+// Getters 
 std::string Meta::getName() { return this->name; }
 long Meta::getStart() { return this->start; }
 long Meta::getSize() { return this->size; }
