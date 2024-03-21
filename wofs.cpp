@@ -6,7 +6,7 @@
 #endif
 
 #define UNSUPPORTED -1
-#define VERSION "0.1: nothing to see"
+#define VERSION "0.3: yay, progress! don't ask if it's correct though"
 
 #include "log.h"
 #include "utils.hpp"
