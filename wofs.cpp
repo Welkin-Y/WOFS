@@ -88,7 +88,6 @@ int wo_truncate(const char* path, off_t size) {
  // TODO: implement
 int wo_getattr(const char* path, struct stat* statbuf) {
     log_msg("getattr: %s\n", path);
-
     TreeNode* t = root_node->find(path);
     if (t == nullptr) {
         log_msg("not found.\n");

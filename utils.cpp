@@ -65,25 +65,28 @@ void* TreeNode::getData() { return this->data; }
 
 
 TreeNode* TreeNode::find(const std::string& name) {
-    std::string n;
-    if (name.at(0) == '/') {
-        n = name.substr(1);
+    // std::string n;
+    // if (name.at(0) == '/') {
+    //     n = name.substr(1);
+    // }
+    // else {
+    //     n = name;
+    // }
+    if(name == "/"){
+        return this;
     }
-    else {
-        n = name;
-    }
-    if (this->m.getName() == n) {
+    if (this->m.getName() == name) {
         return this;
     }
     TreeNode* t;
     if (this->child != nullptr) {
-        t = this->child->find(n);
+        t = this->child->find(name);
         if (t != nullptr) {
             return t;
         }
     }
     if (this->sibling != nullptr) {
-        t = this->sibling->find(n);
+        t = this->sibling->find(name);
         if (t != nullptr) {
             return t;
         }
