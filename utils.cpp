@@ -241,7 +241,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
  * @brief helper function of generateImage
  * recursively write file into image and record meta
 */
-std::vector<Meta> genHelper(const std::string& directory, FILE* f, int currPosition) {
+std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, int currPosition) {
     std::vector<Meta> files;
     DIR* dir;
     struct dirent* ent;
@@ -261,7 +261,7 @@ std::vector<Meta> genHelper(const std::string& directory, FILE* f, int currPosit
                 fwrite(buffer, 1, st.st_size, f);
                 delete buffer;
                 fclose(toWrite);
-                Meta m = Meta((directory + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
+                Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
                 files.push_back(m);
                 currPosition += st.st_size;
                 std::cout << "now the position is: " << currPosition << "\n";
@@ -276,12 +276,12 @@ std::vector<Meta> genHelper(const std::string& directory, FILE* f, int currPosit
                     fwrite(buffer, 1, st.st_size, f);
                     delete buffer;
                     fclose(toWrite);
-                    Meta m = Meta((directory + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
+                    Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
                     files.push_back(m);
                     currPosition += st.st_size;
                     std::cout << "now the position is: " << currPosition << "\n";
                     std::vector<Meta> sub =
-                        genHelper(directory + "/" + ent->d_name, f, currPosition);
+                        genHelper(directory + "/" + ent->d_name, relaDir+ "/" + ent->d_name, f, currPosition);
                     for (size_t i = 0; i < sub.size(); i++) {
                         files.push_back(sub[i]);
                     }
@@ -305,7 +305,7 @@ int generateImage(const std::string& directory, const std::string& image) {
     int currPosition = 0;
     FILE* f = fopen(image.c_str(), "w");
 
-    files = genHelper(directory, f, currPosition);
+    files = genHelper(directory, "",f, currPosition);
 
     writeAllMeta(files, f);
     fclose(f);
