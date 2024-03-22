@@ -87,15 +87,19 @@ image meta layout:
 | 4B length | 4B name length | variable length name | 8B start | 8B file size | 4B permission | 4B owner | 4B group | 1B isDir | 4B last modified time |
 
 */
-
+// For generate filesystem from image:
 Meta parseImageMeta(char* buffer, int metaLen);
 
 Meta readMeta(FILE* f);
 
 std::vector<Meta> readAllMeta(FILE* f);
 
+TreeNode* generateTree(std::vector<Meta> metaList);
+
+// For generate Image
 int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file);
 
 int writeAllMeta(std::vector<Meta> metas, FILE* file);
 
 int generateImage(const std::string& directory, const std::string& image);
+

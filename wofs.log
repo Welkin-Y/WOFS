@@ -1,0 +1,1076 @@
+    conn:
+    proto_major =  7
+    proto_minor =  34
+    async_read =  1
+    max_write =  131072
+    max_readahead =  131072
+    capable = 00000ffb
+    want = 00000010
+    max_background =  0
+    congestion_threshold =  0
+    context:
+    fuse = dd0cb610
+    uid =  0
+    gid =  0
+    pid =  0
+    private_data = dd0caeb0
+    logfile = dd0caf00
+    rootdir = /home/xc139/storage-project/testImage
+    umask = 00000
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /.gitignore
+not found.
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+getattr: /.gitattributes
+not found.
+getattr: /dir1/.gitattributes
+not found.
+read: /dir1/file3
+getattr: /.git
+not found.
+getattr: /.git
+not found.
+opendir: /
+getattr: /
+found: 
+readdir: /
+looking for child
+found child: file1
+found child: file2
+found child: dir1
+getattr: /file1
+found: file1
+getattr: /.gitignore
+not found.
+getattr: /file2
+found: file2
+getattr: /dir1
+found: dir1
+getattr: /dir1/.git
+not found.
+getattr: /dir1/.git
+not found.
+opendir: /dir1
+readdir: /dir1
+looking for child
+found child: dir1/file3
+getattr: /dir1/file3
+found: dir1/file3
+getattr: /dir1/.gitignore
+not found.
+
+bb_destroy(userdata=0xdd0caeb0)

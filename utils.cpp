@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <map>
 
 
 Meta::Meta(
@@ -139,20 +140,20 @@ std::vector<Meta> allFiles(const std::string& directory) {
  * returns a Meta object
 */
 Meta parseImageMeta(char* buffer, int metaLen) {
-    int nameLen = *(int*)(buffer + 4);
-    std::string name = std::string(buffer + 8, nameLen);
-    long start = *(long*)(buffer + 8 + nameLen);
-    char* p = buffer + 8 + nameLen + 8;
+    int nameLen = *(int*)(buffer + sizeof(int));
+    std::string name = std::string(buffer + 2*sizeof(int), nameLen);
+    long start = *(long*)(buffer + 2*sizeof(int) + nameLen);
+    char* p = buffer + 2*sizeof(int) + nameLen + sizeof(start);
     long size = *(long*)p;
-    p += 8;
+    p += sizeof(size);
     unsigned int permission = *(unsigned int*)p;
-    p += 4;
+    p += sizeof(permission);
     unsigned int owner = *(unsigned int*)p;
-    p += 4;
+    p += sizeof(owner);
     unsigned int group = *(unsigned int*)p;
-    p += 4;
+    p += sizeof(group);
     bool isDir = *(bool*)p;
-    p += 1;
+    p += sizeof(isDir);
     time_t lastModified = *(time_t*)p;
     return Meta(name, start, size, permission, owner, group, isDir);
 
@@ -163,10 +164,10 @@ Meta parseImageMeta(char* buffer, int metaLen) {
 */
 Meta readMeta(FILE* f) {
     int metaLen;
-    fread(&metaLen, 4, 1, f);
+    fread(&metaLen, sizeof(metaLen), 1, f);
     char* buffer = new char[metaLen];
-    memcpy(buffer, &metaLen, 4);
-    fread(buffer + 4, 1, metaLen - 4, f);
+    memcpy(buffer, &metaLen, sizeof(metaLen));
+    fread(buffer + sizeof(metaLen), 1, metaLen - sizeof(metaLen), f);
     Meta m = parseImageMeta(buffer, metaLen);
     delete buffer;
     return m;
@@ -176,45 +177,74 @@ std::vector<Meta> readAllMeta(FILE* f) {
     // read the 4B position p at the end of f
     fseek(f, 0, SEEK_END);
     int fileSize = ftell(f);
-    fseek(f, -4, SEEK_END);
+    fseek(f, -(long)sizeof(int), SEEK_END);
     int p;
-    fread(&p, 4, 1, f);
+    fread(&p, (int)sizeof(int), 1, f);
     std::cout << "fileSize: " << fileSize << std::endl;
     std::cout << "p: " << p << std::endl;
     // start from position p, read all meta
     std::vector<Meta> metas;
     fseek(f, p, SEEK_SET);
-    while (ftell(f) < fileSize - 4) {
+    while (ftell(f) < fileSize - (int)sizeof(int)) {
         metas.push_back(readMeta(f));
     }
     return metas;
 }
 
+TreeNode* generateTree(std::vector<Meta> metaList){
+    std::map<std::string, TreeNode*> record;
+    TreeNode* root  = new TreeNode(Meta("",-1, 0, 0777, 0, 0, true));
+    record["/"] = root;
+    std::string currName, currPath;
+    size_t lastSlashPos;
+
+    for(Meta m : metaList){
+        TreeNode * curr = new TreeNode(m);
+        currName = m.getName();
+        lastSlashPos = currName.find_last_of('/');
+        currPath = currName.substr(0, lastSlashPos);
+        if(record[currPath+"/"]->getMeta().getName()==currPath){
+            record[currPath+"/"]->setChild(curr);
+        }
+        else{
+            record[currPath+"/"]->setSibling(curr);
+        }
+         record[currPath+"/"] = curr;
+         if(m.isDirectory()){
+            record[m.getName()+"/"] = curr;
+         }
+    } 
+    return root; 
+}
+
+
+
+
 int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file) {
     int nameSize = name.size();
-    int metaSize = 8 + nameSize + 8 + 8 + 4 + 4 + 4 + 1 + 4;
+    int metaSize = 2*sizeof(int) + nameSize + sizeof(start) + sizeof(size) + sizeof(permission) + sizeof(owner) + sizeof(group) + sizeof(isDir) + sizeof(time_t);
     char* buffer = new char[metaSize];
     char* p = buffer;
-    memcpy(p, &metaSize, 4);
-    p += 4;
-    memcpy(p, &nameSize, 4);
-    p += 4;
+    memcpy(p, &metaSize, sizeof(metaSize));
+    p += sizeof(metaSize);
+    memcpy(p, &nameSize, sizeof(nameSize));
+    p += sizeof(nameSize);
     memcpy(p, name.c_str(), nameSize);
     p += nameSize;
-    memcpy(p, &start, 8);
-    p += 8;
-    memcpy(p, &size, 8);
-    p += 8;
-    memcpy(p, &permission, 4);
-    p += 4;
-    memcpy(p, &owner, 4);
-    p += 4;
-    memcpy(p, &group, 4);
-    p += 4;
-    memcpy(p, &isDir, 1);
-    p += 1;
-    memcpy(p, &lastModified, 4);
-    p += 4;
+    memcpy(p, &start, sizeof(start));
+    p += sizeof(start);
+    memcpy(p, &size, sizeof(size));
+    p += sizeof(size);
+    memcpy(p, &permission, sizeof(permission));
+    p += sizeof(permission);
+    memcpy(p, &owner, sizeof(owner));
+    p += sizeof(owner);
+    memcpy(p, &group, sizeof(group));
+    p += sizeof(group);
+    memcpy(p, &isDir, sizeof(isDir));
+    p += sizeof(isDir);
+    memcpy(p, &lastModified, sizeof(lastModified));
+    p += sizeof(lastModified);
     fwrite(buffer, 1, metaSize, file);
     delete buffer;
     return 0;
@@ -231,7 +261,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
         writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), time(NULL), file);
     }
-    fwrite(&p, 4, 1, file);
+    fwrite(&p, sizeof(p), 1, file);
 
     return 0;
 }
@@ -241,7 +271,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
  * @brief helper function of generateImage
  * recursively write file into image and record meta
 */
-std::vector<Meta> genHelper(const std::string& directory, FILE* f, int currPosition) {
+std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, int currPosition) {
     std::vector<Meta> files;
     DIR* dir;
     struct dirent* ent;
@@ -261,7 +291,7 @@ std::vector<Meta> genHelper(const std::string& directory, FILE* f, int currPosit
                 fwrite(buffer, 1, st.st_size, f);
                 delete buffer;
                 fclose(toWrite);
-                Meta m = Meta((directory + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
+                Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
                 files.push_back(m);
                 currPosition += st.st_size;
                 std::cout << "now the position is: " << currPosition << "\n";
@@ -276,12 +306,12 @@ std::vector<Meta> genHelper(const std::string& directory, FILE* f, int currPosit
                     fwrite(buffer, 1, st.st_size, f);
                     delete buffer;
                     fclose(toWrite);
-                    Meta m = Meta((directory + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
+                    Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
                     files.push_back(m);
                     currPosition += st.st_size;
                     std::cout << "now the position is: " << currPosition << "\n";
                     std::vector<Meta> sub =
-                        genHelper(directory + "/" + ent->d_name, f, currPosition);
+                        genHelper(directory + "/" + ent->d_name, relaDir+ "/" + ent->d_name, f, currPosition);
                     for (size_t i = 0; i < sub.size(); i++) {
                         files.push_back(sub[i]);
                     }
@@ -304,10 +334,13 @@ int generateImage(const std::string& directory, const std::string& image) {
     std::vector<Meta> files;
     int currPosition = 0;
     FILE* f = fopen(image.c_str(), "w");
-
-    files = genHelper(directory, f, currPosition);
-
-    writeAllMeta(files, f);
-    fclose(f);
-    return 0;
+    if(f!=nullptr){
+        files = genHelper(directory, "",f, currPosition);
+        writeAllMeta(files, f);
+        fclose(f);
+        return EXIT_SUCCESS;
+    }
+    perror("Error: Cannot open the image file\n");
+    return EXIT_FAILURE;
 }
+

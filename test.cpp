@@ -14,7 +14,13 @@
  * tests meta read/write
 */
 
+void traversal(TreeNode* curr){
+    if(!curr) return;
+    std::cout<<curr->getMeta().getName()<<std::endl;
+    traversal(curr->getChild());
+    traversal(curr->getSibling());
 
+}
 
 int main() {
     // std::string n = "/test/abcd";
@@ -53,6 +59,11 @@ int main() {
         fprintf(stderr, "isDir: %d\n", it->isDirectory());
 
     }
+
+
+    std::cout<< "\n============\nTest Tree:\n";
+    TreeNode* root = generateTree(metas);
+    traversal(root);
     return 0;
 
 }
