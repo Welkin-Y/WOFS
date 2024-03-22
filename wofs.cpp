@@ -14,6 +14,7 @@
 
 int blk_size;
 TreeNode* root_node;
+FILE* imageFile;
 /**
  * creates a wofs image with files in path, stored in image_path
  * @param path path to directory
@@ -118,9 +119,24 @@ int wo_opendir(const char* path, struct fuse_file_info* fi) {
 }
 
 int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
-    log_msg("read: %s\n", path);
-
-    return 0;
+    log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+	    path, buf, size, offset, fi);
+    TreeNode * found = root_node->find(path);
+    if(!found){
+        return -ENOENT;
+    }
+    long f_size = found->getMeta().getSize();
+    if(offset>f_size){
+        return 0;
+    }
+    
+    long s = (long)size > f_size-offset ? f_size-offset : size;
+    memset(buf, 0, size);
+    log_msg("   Found file: start: %ld, size: %ld\n",found->getMeta().getStart(),f_size);
+    fseek(imageFile, found->getMeta().getStart()+offset, SEEK_SET);
+    return fread(buf, 1, s, imageFile);
+    // log_msg("%s\n",buf);
+    // return found->getMeta().getSize();
 }
 
 int wo_readdir(const char* path,
@@ -322,12 +338,12 @@ int main(int argc, char* argv[]) {
     // Meta f4 = Meta("dir1/file3", -1, 400, 0777, 0, 0, false);
     // TreeNode* f4_node = new TreeNode(f4);
     // f3_node->setChild(f4_node);
-    FILE* f = fopen(wo_data->rootdir, "r");
-    if(f==nullptr){
+    imageFile = fopen(wo_data->rootdir, "r");
+    if(imageFile==nullptr){
         perror("Error: Cannot open the image file for file system\n");
         return EXIT_FAILURE;
     }
-    std::vector<Meta> metaList= readAllMeta(f);
+    std::vector<Meta> metaList= readAllMeta(imageFile);
     std::cout << "Found "<<metaList.size()<<" meta data\n";
     root_node = generateTree(metaList);
     // turn over control to fuse

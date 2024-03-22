@@ -9,40 +9,27 @@
     max_background =  0
     congestion_threshold =  0
     context:
-    fuse = fbdee9c0
+    fuse = 074409c0
     uid =  0
     gid =  0
     pid =  0
-    private_data = fbdebeb0
-    logfile = fbdebf00
+    private_data = 0743deb0
+    logfile = 0743df00
     rootdir = /home/xc139/storage-project/testImage
     umask = 00000
 getattr: /
 found: 
-opendir: /
-getattr: /
-found: 
-readdir: /
-looking for child
-found child: /d1
-found child: /f0
-found child: /d4
-found child: /d5
-getattr: /d1
-found: /d1
+getattr: /file0
+not found.
 getattr: /f0
 found: /f0
-getattr: /d4
-found: /d4
-getattr: /d5
-found: /d5
+wo_read(path="/f0", buf=0xb0000ec0, size=4096, offset=0, fi=0xbec3fc50)
+   Found file: start: 125, size: 12
 getattr: /
 found: 
 getattr: /d1
 found: /d1
 opendir: /d1
-getattr: /d1
-found: /d1
 readdir: /d1
 looking for child
 found child: /d1/f1
@@ -54,101 +41,29 @@ getattr: /d1/d2
 found: /d1/d2
 getattr: /d1/f2
 found: /d1/f2
-getattr: /
-found: 
-getattr: /
-found: 
-opendir: /
-readdir: /
-looking for child
-found child: /d1
-found child: /f0
-found child: /d4
-found child: /d5
-getattr: /d1
-found: /d1
-getattr: /d4
-found: /d4
-getattr: /d5
-found: /d5
-getattr: /f0
-found: /f0
-getattr: /
-found: 
-opendir: /
-readdir: /
-looking for child
-found child: /d1
-found child: /f0
-found child: /d4
-found child: /d5
-getattr: /d1
-found: /d1
-getattr: /d4
-found: /d4
-getattr: /d5
-found: /d5
-getattr: /f0
-found: /f0
-getattr: /d1
-found: /d1
-opendir: /d1
-readdir: /d1
-looking for child
-found child: /d1/f1
-found child: /d1/d2
-found child: /d1/f2
-getattr: /d1/d2
-found: /d1/d2
 getattr: /d1/f1
 found: /d1/f1
+wo_read(path="/d1/f1", buf=0xb8002790, size=4096, offset=0, fi=0xbf462c50)
+   Found file: start: 0, size: 23
 getattr: /d1/f2
 found: /d1/f2
-getattr: /d1
-found: /d1
-getattr: /d1/d2
-found: /d1/d2
-opendir: /d1/d2
-readdir: /d1/d2
-looking for child
-found child: /d1/d2/f3
-found child: /d1/d2/f4
-getattr: /d1/d2/f3
-found: /d1/d2/f3
-getattr: /d1/d2/f4
-found: /d1/d2/f4
-getattr: /d4
-found: /d4
-opendir: /d4
-readdir: /d4
-looking for child
-found child: /d4/f6
-getattr: /d4/f6
-found: /d4/f6
-getattr: /d5
-found: /d5
-opendir: /d5
-readdir: /d5
-looking for child
-getattr: /
-found: 
+wo_read(path="/d1/f2", buf=0xb8002790, size=4096, offset=0, fi=0xbf462c50)
+   Found file: start: 55, size: 70
 getattr: /
 found: 
 getattr: /d1$
 not found.
 getattr: /d1$
 not found.
+getattr: /d1$
+not found.
+getattr: /d1$
+not found.
+getattr: /d1$
+not found.
+getattr: /d1$
+not found.
 getattr: /d1
 found: /d1
-getattr: /
-found: 
-getattr: /d1
-found: /d1
-getattr: /d1/~!
-not found.
-getattr: /d1/~!
-not found.
-getattr: /d1/~!
-not found.
 
-bb_destroy(userdata=0xfbdebeb0)
+bb_destroy(userdata=0x0743deb0)

@@ -274,7 +274,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
  * @brief helper function of generateImage
  * recursively write file into image and record meta
 */
-std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, int currPosition) {
+std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, long currPosition) {
     std::vector<Meta> files;
     DIR* dir;
     struct dirent* ent;
@@ -303,15 +303,15 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
             if (ent->d_type == DT_DIR) {
                 // dir
                 if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                    toWrite = fopen((directory + "/" + ent->d_name).c_str(), "r");
-                    char* buffer = new char[st.st_size];
-                    fread(buffer, 1, st.st_size, toWrite);
-                    fwrite(buffer, 1, st.st_size, f);
-                    delete buffer;
-                    fclose(toWrite);
+                    // toWrite = fopen((directory + "/" + ent->d_name).c_str(), "r");
+                    // char* buffer = new char[st.st_size];
+                    // fread(buffer, 1, st.st_size, toWrite);
+                    // fwrite(buffer, 1, st.st_size, f);
+                    // delete buffer;
+                    // fclose(toWrite);
                     Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
                     files.push_back(m);
-                    currPosition += st.st_size;
+                    // currPosition += st.st_size;
                     std::cout << "now the position is: " << currPosition << "\n";
                     std::vector<Meta> sub =
                         genHelper(directory + "/" + ent->d_name, relaDir+ "/" + ent->d_name, f, currPosition);
@@ -335,7 +335,7 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
 */
 int generateImage(const std::string& directory, const std::string& image) {
     std::vector<Meta> files;
-    int currPosition = 0;
+    long currPosition = 0;
     FILE* f = fopen(image.c_str(), "w");
     if(f!=nullptr){
         files = genHelper(directory, "",f, currPosition);
