@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <map>
 
 
 Meta::Meta(
@@ -190,6 +191,35 @@ std::vector<Meta> readAllMeta(FILE* f) {
     return metas;
 }
 
+TreeNode* generateTree(std::vector<Meta> metaList){
+    std::map<std::string, TreeNode*> record;
+    TreeNode* root  = new TreeNode(Meta("",-1, 0, 0777, 0, 0, true));
+    record["/"] = root;
+    std::string currName, currPath;
+    size_t lastSlashPos;
+
+    for(Meta m : metaList){
+        TreeNode * curr = new TreeNode(m);
+        currName = m.getName();
+        lastSlashPos = currName.find_last_of('/');
+        currPath = currName.substr(0, lastSlashPos);
+        if(record[currPath+"/"]->getMeta().getName()==currPath){
+            record[currPath+"/"]->setChild(curr);
+        }
+        else{
+            record[currPath+"/"]->setSibling(curr);
+        }
+         record[currPath+"/"] = curr;
+         if(m.isDirectory()){
+            record[m.getName()+"/"] = curr;
+         }
+    } 
+    return root; 
+}
+
+
+
+
 int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file) {
     int nameSize = name.size();
     int metaSize = 2*sizeof(int) + nameSize + sizeof(start) + sizeof(size) + sizeof(permission) + sizeof(owner) + sizeof(group) + sizeof(isDir) + sizeof(time_t);
@@ -304,10 +334,13 @@ int generateImage(const std::string& directory, const std::string& image) {
     std::vector<Meta> files;
     int currPosition = 0;
     FILE* f = fopen(image.c_str(), "w");
-
-    files = genHelper(directory, "",f, currPosition);
-
-    writeAllMeta(files, f);
-    fclose(f);
-    return 0;
+    if(f!=nullptr){
+        files = genHelper(directory, "",f, currPosition);
+        writeAllMeta(files, f);
+        fclose(f);
+        return EXIT_SUCCESS;
+    }
+    perror("Error: Cannot open the image file\n");
+    return EXIT_FAILURE;
 }
+

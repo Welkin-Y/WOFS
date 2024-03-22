@@ -267,7 +267,8 @@ int wo_options(int argc, char* argv[]) {
             wo_usage();
             return EXIT_FAILURE;
         }
-        return wo_make_image(argv[2], argv[3]);
+        wo_make_image(argv[2], argv[3]);
+        return EXIT_FAILURE;
     }
     // no options
     return EXIT_SUCCESS;
@@ -288,7 +289,7 @@ int main(int argc, char* argv[]) {
     int fuse_stat;
     struct wo_state* wo_data = (struct wo_state*)malloc(sizeof(struct wo_state));
     if (wo_data == NULL) {
-        perror("main calloc");
+        perror("main malloc error");
         abort();
     }
 
@@ -303,26 +304,33 @@ int main(int argc, char* argv[]) {
     struct stat* st = (struct stat*)malloc(sizeof(struct stat));
     stat(wo_data->rootdir, st);
     blk_size = st->st_size;
+    
+    // Meta root = Meta("", -1, 3200, 0777, 0, 0, true);
+    // fprintf(stderr, "root: %s\n", root.getName().c_str());
+    // root_node = new TreeNode(root);
+    // Meta f1 = Meta("file1", -1, 400, 0777, 0, 0, false);
+    // TreeNode* f1_node = new TreeNode(f1);
+    // root_node->setChild(f1_node);
 
-    Meta root = Meta("", -1, 3200, 0777, 0, 0, true);
-    fprintf(stderr, "root: %s\n", root.getName().c_str());
-    root_node = new TreeNode(root);
-    Meta f1 = Meta("file1", -1, 400, 0777, 0, 0, false);
-    TreeNode* f1_node = new TreeNode(f1);
-    root_node->setChild(f1_node);
+    // Meta f2 = Meta("file2", -1, 400, 0777, 0, 0, false);
+    // TreeNode* f2_node = new TreeNode(f2);
+    // f1_node->setSibling(f2_node);
 
-    Meta f2 = Meta("file2", -1, 400, 0777, 0, 0, false);
-    TreeNode* f2_node = new TreeNode(f2);
-    f1_node->setSibling(f2_node);
+    // Meta f3 = Meta("dir1", -1, 720, 0777, 0, 0, true);
+    // TreeNode* f3_node = new TreeNode(f3);
+    // f2_node->setSibling(f3_node);
 
-    Meta f3 = Meta("dir1", -1, 720, 0777, 0, 0, true);
-    TreeNode* f3_node = new TreeNode(f3);
-    f2_node->setSibling(f3_node);
-
-    Meta f4 = Meta("dir1/file3", -1, 400, 0777, 0, 0, false);
-    TreeNode* f4_node = new TreeNode(f4);
-    f3_node->setChild(f4_node);
-
+    // Meta f4 = Meta("dir1/file3", -1, 400, 0777, 0, 0, false);
+    // TreeNode* f4_node = new TreeNode(f4);
+    // f3_node->setChild(f4_node);
+    FILE* f = fopen(wo_data->rootdir, "r");
+    if(f==nullptr){
+        perror("Error: Cannot open the image file for file system\n");
+        return EXIT_FAILURE;
+    }
+    std::vector<Meta> metaList= readAllMeta(f);
+    std::cout << "Found "<<metaList.size()<<" meta data\n";
+    root_node = generateTree(metaList);
     // turn over control to fuse
     fprintf(stderr, "about to call fuse_main\n");
     fuse_stat = fuse_main(argc, argv, &wo_oper, wo_data);
