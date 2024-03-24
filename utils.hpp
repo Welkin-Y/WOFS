@@ -28,8 +28,9 @@ class Meta {
     unsigned int owner;
     unsigned int group;
     bool isDir;
+    time_t lastModified;
 public:
-    Meta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir);
+    Meta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified);
     std::string getName();
     long getStart();
     long getSize();
@@ -37,6 +38,7 @@ public:
     unsigned int getOwner();
     unsigned int getGroup();
     bool isDirectory();
+    time_t getLastModified();
 };
 
 

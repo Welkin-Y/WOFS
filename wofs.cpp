@@ -6,7 +6,7 @@
 #endif
 
 #define UNSUPPORTED -1
-#define VERSION "0.3: yay, progress! don't ask if it's correct though"
+#define VERSION "0.9: make image, mount, working fs"
 
 #include "log.h"
 #include "utils.hpp"
@@ -25,13 +25,7 @@ int wo_make_image(const char* path, const char* image_path) {
     // TODO: write an acutal implementation
 
     fprintf(stderr, "making image from %s to %s\n", path, image_path);
-
-    std::vector<Meta> files = allFiles(path);
-    fprintf(stderr, "Files:\n");
-    for (std::vector<Meta>::iterator it = files.begin(); it != files.end(); it++) {
-        fprintf(stderr, "%s\n", it->getName().c_str());
-        fprintf(stderr, "size: %ld\n", it->getSize());
-    }
+    generateImage(path, image_path);
     return EXIT_SUCCESS;
 }
 
@@ -98,13 +92,19 @@ int wo_getattr(const char* path, struct stat* statbuf) {
         log_msg("found: %s\n", t->getMeta().getName().c_str());
     }
     Meta m = t->getMeta();
+    int p = m.getPermission();
+
+    statbuf->st_mtime = m.getLastModified();
     if (m.isDirectory()) {
-        statbuf->st_mode = S_IFDIR | 0755;
+
+        statbuf->st_mode = S_IFDIR | p;
         statbuf->st_size = blk_size;
+
     }
     else {
-        statbuf->st_mode = S_IFREG | 0777;
+        statbuf->st_mode = S_IFREG | p;
         statbuf->st_size = m.getSize();
+
     }
     statbuf->st_nlink = 1;
 
@@ -120,20 +120,20 @@ int wo_opendir(const char* path, struct fuse_file_info* fi) {
 
 int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
     log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-	    path, buf, size, offset, fi);
-    TreeNode * found = root_node->find(path);
-    if(!found){
+        path, buf, size, offset, fi);
+    TreeNode* found = root_node->find(path);
+    if (!found) {
         return -ENOENT;
     }
     long f_size = found->getMeta().getSize();
-    if(offset>f_size){
+    if (offset > f_size) {
         return 0;
     }
-    
-    long s = (long)size > f_size-offset ? f_size-offset : size;
+
+    long s = (long)size > f_size - offset ? f_size - offset : size;
     memset(buf, 0, size);
-    log_msg("   Found file: start: %ld, size: %ld\n",found->getMeta().getStart(),f_size);
-    fseek(imageFile, found->getMeta().getStart()+offset, SEEK_SET);
+    log_msg("   Found file: start: %ld, size: %ld\n", found->getMeta().getStart(), f_size);
+    fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
     return fread(buf, 1, s, imageFile);
     // log_msg("%s\n",buf);
     // return found->getMeta().getSize();
@@ -319,7 +319,7 @@ int main(int argc, char* argv[]) {
     struct stat* st = (struct stat*)malloc(sizeof(struct stat));
     stat(wo_data->rootdir, st);
     blk_size = st->st_size;
-    
+
     // Meta root = Meta("", -1, 3200, 0777, 0, 0, true);
     // fprintf(stderr, "root: %s\n", root.getName().c_str());
     // root_node = new TreeNode(root);
@@ -339,12 +339,12 @@ int main(int argc, char* argv[]) {
     // TreeNode* f4_node = new TreeNode(f4);
     // f3_node->setChild(f4_node);
     imageFile = fopen(wo_data->rootdir, "r");
-    if(imageFile==nullptr){
+    if (imageFile == nullptr) {
         perror("Error: Cannot open the image file for file system\n");
         return EXIT_FAILURE;
     }
-    std::vector<Meta> metaList= readAllMeta(imageFile);
-    std::cout << "Found "<<metaList.size()<<" meta data\n";
+    std::vector<Meta> metaList = readAllMeta(imageFile);
+    std::cout << "Found " << metaList.size() << " meta data\n";
     root_node = generateTree(metaList);
     // turn over control to fuse
     fprintf(stderr, "about to call fuse_main\n");

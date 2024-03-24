@@ -9,7 +9,8 @@ Meta::Meta(
     unsigned int permission,
     unsigned int owner,
     unsigned int group,
-    bool isDir) : name(name), start(start), size(size), permission(permission), owner(owner), group(group), isDir(isDir) {}
+    bool isDir,
+    time_t lastModified) : name(name), start(start), size(size), permission(permission), owner(owner), group(group), isDir(isDir), lastModified(lastModified) {}
 
 std::string Meta::getName() { return this->name; }
 long Meta::getStart() { return this->start; }
@@ -18,6 +19,7 @@ unsigned int Meta::getPermission() { return this->permission; }
 unsigned int Meta::getOwner() { return this->owner; }
 unsigned int Meta::getGroup() { return this->group; }
 bool Meta::isDirectory() { return this->isDir; }
+time_t Meta::getLastModified() { return this->lastModified; }
 
 TreeNode::TreeNode(Meta m) : m(m), child(nullptr), sibling(nullptr) {}
 TreeNode::TreeNode(Meta m, TreeNode* child, TreeNode* sibling) : m(m), child(child), sibling(sibling) {
@@ -72,7 +74,7 @@ TreeNode* TreeNode::find(const std::string& name) {
     // else {
     //     n = name;
     // }
-    if(name == "/"){
+    if (name == "/") {
         return this;
     }
     if (this->m.getName() == name) {
@@ -108,14 +110,14 @@ std::vector<Meta> allFiles(const std::string& directory) {
 
             if (ent->d_type == DT_REG) {
                 // file 
-                Meta m = Meta((directory + "/" + ent->d_name), -1, st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
+                Meta m = Meta((directory + "/" + ent->d_name), -1, st.st_size, st.st_mode, st.st_uid, st.st_gid, false, st.st_mtime);
                 files.push_back(m);
             }
 
             if (ent->d_type == DT_DIR) {
                 // dir
                 if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                    Meta m = Meta((directory + "/" + ent->d_name), -1, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
+                    Meta m = Meta((directory + "/" + ent->d_name), -1, st.st_size, st.st_mode, st.st_uid, st.st_gid, true, st.st_mtime);
                     files.push_back(m);
                     std::vector<Meta> sub =
                         allFiles(directory + "/" + ent->d_name);
@@ -144,9 +146,9 @@ std::vector<Meta> allFiles(const std::string& directory) {
 */
 Meta parseImageMeta(char* buffer, int metaLen) {
     int nameLen = *(int*)(buffer + sizeof(int));
-    std::string name = std::string(buffer + 2*sizeof(int), nameLen);
-    long start = *(long*)(buffer + 2*sizeof(int) + nameLen);
-    char* p = buffer + 2*sizeof(int) + nameLen + sizeof(start);
+    std::string name = std::string(buffer + 2 * sizeof(int), nameLen);
+    long start = *(long*)(buffer + 2 * sizeof(int) + nameLen);
+    char* p = buffer + 2 * sizeof(int) + nameLen + sizeof(start);
     long size = *(long*)p;
     p += sizeof(size);
     unsigned int permission = *(unsigned int*)p;
@@ -158,7 +160,7 @@ Meta parseImageMeta(char* buffer, int metaLen) {
     bool isDir = *(bool*)p;
     p += sizeof(isDir);
     time_t lastModified = *(time_t*)p;
-    return Meta(name, start, size, permission, owner, group, isDir);
+    return Meta(name, start, size, permission, owner, group, isDir, lastModified);
 
 }
 
@@ -194,30 +196,30 @@ std::vector<Meta> readAllMeta(FILE* f) {
     return metas;
 }
 
-TreeNode* generateTree(std::vector<Meta> metaList){
+TreeNode* generateTree(std::vector<Meta> metaList) {
     std::map<std::string, TreeNode*> record;
-    TreeNode* root  = new TreeNode(Meta("",-1, 0, 0777, 0, 0, true));
+    TreeNode* root = new TreeNode(Meta("", -1, 0, 0700, 0, 0, true, time(NULL)));
     record["/"] = root;
     std::string currName, currPath;
     size_t lastSlashPos;
 
-    for(Meta m : metaList){
-        TreeNode * curr = new TreeNode(m);
+    for (Meta m : metaList) {
+        TreeNode* curr = new TreeNode(m);
         currName = m.getName();
         lastSlashPos = currName.find_last_of('/');
         currPath = currName.substr(0, lastSlashPos);
-        if(record[currPath+"/"]->getMeta().getName()==currPath){
-            record[currPath+"/"]->setChild(curr);
+        if (record[currPath + "/"]->getMeta().getName() == currPath) {
+            record[currPath + "/"]->setChild(curr);
         }
-        else{
-            record[currPath+"/"]->setSibling(curr);
+        else {
+            record[currPath + "/"]->setSibling(curr);
         }
-         record[currPath+"/"] = curr;
-         if(m.isDirectory()){
-            record[m.getName()+"/"] = curr;
-         }
-    } 
-    return root; 
+        record[currPath + "/"] = curr;
+        if (m.isDirectory()) {
+            record[m.getName() + "/"] = curr;
+        }
+    }
+    return root;
 }
 
 
@@ -225,7 +227,7 @@ TreeNode* generateTree(std::vector<Meta> metaList){
 
 int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file) {
     int nameSize = name.size();
-    int metaSize = 2*sizeof(int) + nameSize + sizeof(start) + sizeof(size) + sizeof(permission) + sizeof(owner) + sizeof(group) + sizeof(isDir) + sizeof(time_t);
+    int metaSize = 2 * sizeof(int) + nameSize + sizeof(start) + sizeof(size) + sizeof(permission) + sizeof(owner) + sizeof(group) + sizeof(isDir) + sizeof(time_t);
     char* buffer = new char[metaSize];
     char* p = buffer;
     memcpy(p, &metaSize, sizeof(metaSize));
@@ -262,7 +264,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
     int p = ftell(file);
     std::cout << "p: " << p << std::endl;
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
-        writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), time(NULL), file);
+        writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), it->getLastModified(), file);
     }
     fwrite(&p, sizeof(p), 1, file);
 
@@ -294,7 +296,9 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                 fwrite(buffer, 1, st.st_size, f);
                 delete buffer;
                 fclose(toWrite);
-                Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, false);
+                int p = st.st_mode;
+                p &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+                Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, p, st.st_uid, st.st_gid, false, st.st_mtime);
                 files.push_back(m);
                 currPosition += st.st_size;
                 std::cout << "now the position is: " << currPosition << "\n";
@@ -309,12 +313,14 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                     // fwrite(buffer, 1, st.st_size, f);
                     // delete buffer;
                     // fclose(toWrite);
-                    Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, st.st_mode, st.st_uid, st.st_gid, true);
+                    int p = st.st_mode;
+                    p &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+                    Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, p, st.st_uid, st.st_gid, true, st.st_mtime);
                     files.push_back(m);
                     // currPosition += st.st_size;
                     std::cout << "now the position is: " << currPosition << "\n";
                     std::vector<Meta> sub =
-                        genHelper(directory + "/" + ent->d_name, relaDir+ "/" + ent->d_name, f, currPosition);
+                        genHelper(directory + "/" + ent->d_name, relaDir + "/" + ent->d_name, f, currPosition);
                     for (size_t i = 0; i < sub.size(); i++) {
                         files.push_back(sub[i]);
                     }
@@ -334,11 +340,23 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
  * @brief generate an image file from a directory
 */
 int generateImage(const std::string& directory, const std::string& image) {
+
+    // check if directory is a directory
+    struct stat st;
+    if (stat(directory.c_str(), &st) != 0) {
+        perror("Error: Cannot open the directory\n");
+        return EXIT_FAILURE;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+        fprintf(stderr, "Error: %s is not a directory\n", directory.c_str());
+        return EXIT_FAILURE;
+    }
+
     std::vector<Meta> files;
     long currPosition = 0;
     FILE* f = fopen(image.c_str(), "w");
-    if(f!=nullptr){
-        files = genHelper(directory, "",f, currPosition);
+    if (f != nullptr) {
+        files = genHelper(directory, "", f, currPosition);
         writeAllMeta(files, f);
         fclose(f);
         return EXIT_SUCCESS;
