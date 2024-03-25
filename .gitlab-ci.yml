@@ -11,6 +11,10 @@
 # see https://hub.docker.com/_/gcc/
 
 image: gcc
+before_script:
+  - apt-get update -qy
+  - apt-get install libfuse-dev -y
+
 
 build:
   stage: build
@@ -32,7 +36,10 @@ build:
 test:
   stage: test
   script:
-    - ./run_tests.sh
+    - ./run_test.sh
+
+after_script:
+  - make clean
 
 # deploy:
 #   stage: deploy
