@@ -35,5 +35,17 @@
 *.out
 *.app
 
+### VisualStudioCode ###
+.vscode/
+
+# Local History for Visual Studio Code
+.history/
+
+# Logs
+*.log
+
 # Others
 /playground
+/build
+
+

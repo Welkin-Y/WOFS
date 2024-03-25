@@ -5,8 +5,8 @@
   See the file COPYING.
 */
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#pragma once
+
 #include <stdio.h>
 
 //  macro to log fields in structs.
@@ -25,4 +25,3 @@ void log_statvfs(struct statvfs* sv);
 int  log_syscall(char* func, int retstat, int min_ret);
 void log_utime(struct utimbuf* buf);
 
-#endif

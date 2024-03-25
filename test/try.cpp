@@ -40,7 +40,7 @@ void print_dir(std::string directory){
         }
     }
 }
-int main() {
+int try_main() {
     // std::string directory();
     // print_dir("/home/xc139/try");
     

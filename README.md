@@ -1,10 +1,45 @@
 # Write Once Filesystem (WOFS)
 
-## how to use
+## Authors
+
+*TBD*
+
+## Project Structure
+
+```
+.
+├── Makefile
+├── README.md
+├── run_test.sh
+├── src
+│   ├── log.c
+│   ├── log.h
+│   ├── params.h
+│   ├── utils.cpp
+│   ├── utils.hpp
+│   └── wofs.cpp
+└── test
+    ├── test.cpp
+    └── try.cpp
+```
+
+## Compile project
+
++ `make`
++ `./build/wofs`
+
+## Run test
+
++ `sh run_test.sh`
+
+## How to use
+
 + To mount: wofs [options] <image file> <mount point>
 + To generate image: wofs -g <directory> <image file>
 done (for now)
+
 ## progress: 
+
 + meta tree
 + fixed meta tree on mounting the fs
 + traverse meta tree to find files and dirs
@@ -18,4 +53,7 @@ done (for now)
 
 ## TODO:
 + root directory's permission and mtime still set arbitrarily
+
+## Acknowledgements
+*TBD*
 
