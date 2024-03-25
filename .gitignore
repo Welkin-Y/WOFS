@@ -35,5 +35,12 @@
 *.out
 *.app
 
+# Logs
+*.log
+
 # Others
 /playground
+testImage
+test
+wofs
+
