@@ -14,7 +14,9 @@ image: gcc
 before_script:
   - apt-get update -qy
   - apt-get install libfuse-dev -y
-
+  - apt-get install tree -y
+  - apt-get install sudo -y
+  - apt-get install fuse -y
 
 build:
   stage: build
@@ -33,10 +35,18 @@ build:
   #     #     - "*.o"
 
 # run tests using the binary built before
-test:
-  stage: test_file_system
+test_file_system:
+  stage: test 
   script:
-    - ./run_test.sh
+    - which fusermount
+    - useradd -d /builds/zy96 -g users -M -N builder
+    - chown -R builder:users ..
+    - |     
+      sudo -H -i -u builder sh -e -x << EOS                                                                                                                                                                                                                       
+      umask 0077                                                                                                                                                                                                                                               
+      export CONTINUOUS_INTEGRATION_SYSTEM="gitlab" TIMESTAMP=`date +%Y%m%d%H%M%S` DEFAULT_TARGET="debug"                                                                                                                                                      
+      export PREFIX="\${HOME}/usr" SYSCONFDIR="\${HOME}/etc/conf" LOCALSTATEDIR="\${HOME}/var"                                                                                                                                                                 
+      ./run_test.sh
 
 after_script:
   - make clean

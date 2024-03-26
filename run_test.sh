@@ -1,4 +1,6 @@
 #! /bin/bash
+make clean > /dev/null 2>&1
+make > /dev/null 2>&1
 make test  > /dev/null 2>&1
 cd build
 mkdir d0 > /dev/null 2>&1
@@ -17,4 +19,16 @@ cd d4
 echo "12345678910" > f6
 cd ../../
 ./test
+mkdir mountpoint > /dev/null 2>&1
+cd d0
+tree > ../d0.tree
+cd ..
+./wofs testImage mountpoint
+cd mountpoint
+tree > ../mountpoint.tree
+cd ..
+echo "compare file strcture"
+diff d0.tree mountpoint.tree
+echo "Test completed successfully"
+umount mountpoint
 # rm -r d0
