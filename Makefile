@@ -60,7 +60,7 @@ $(WOFS_EXE): $(COMMON_OBJS)
 EXCLUDE_OBJS := $(OBJ_DIR)/wofs.o $(OBJ_DIR)/try.o
 
 $(TEST_EXE): $(TEST_OBJS) $(filter-out $(EXCLUDE_OBJS), $(COMMON_OBJS))
-	$(CC) $^ $(LIBS) -o $@
+	$(CC) $^ $(LDFLAGS) $(LIBS) -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
