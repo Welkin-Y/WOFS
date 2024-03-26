@@ -34,7 +34,7 @@ build:
 
 # run tests using the binary built before
 test:
-  stage: test
+  stage: test_file_system
   script:
     - ./run_test.sh
 
