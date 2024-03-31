@@ -534,60 +534,22 @@ int gcm_seek_decrypt(unsigned char* ciphertext, int ciphertext_len,
     // calculate the iv at offset start * aes_block_size
     unsigned char iv_true[iv_len];
     memcpy(iv_true, iv, iv_len);
-    std::cout << std::endl << "iv: ";
-    for (int i = 0; i < iv_len; i++) {
-        // hex 
-        std::cout << std::hex << (int)iv_true[i];
-    }
-    std::cout << std::endl;
-
 
     /* Initialise key and IV */
     if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv_true)) { std::cout << "error in EVP_DecryptInit_ex" << std::endl; }
 
 
 
-    if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, aes_block_size))
+    if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, end))
     {
         std::cout << "error in EVP_DecryptUpdate" << std::endl;
     }
-    std::cout << "decrypting " << len << " bytes" << std::endl;
     plaintext_len = len;
 
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag)) { std::cout << "error in EVP_CIPHER_CTX_ctrl" << std::endl; }
     ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
 
-    unsigned char* x = new unsigned char[iv_len];
-    EVP_CIPHER_CTX_get_original_iv(ctx, x, iv_len);
-    std::cout << "original iv: ";
-    for (int i = 0; i < iv_len; i++) {
-        // hex 
-        std::cout << std::hex << (int)x[i];
-    }
-    std::cout << std::endl;
-    EVP_CIPHER_CTX_get_updated_iv(ctx, x, iv_len);
-    std::cout << "updated iv: ";
-    for (int i = 0; i < iv_len; i++) {
-        // hex 
-        std::cout << std::hex << (int)x[i];
-    }
-    std::cout << std::endl;
-
-
-
-
     EVP_CIPHER_CTX_free(ctx);
-    // if (ret > 0) {
-    //     /* Success */
-    //     return plaintext_len;
-    // }
-    // else {
-    //     /* Verify failed */
-    //     std::cout << "verification of tag failed: plaintext is not trustworthy" << std::endl;
-    //     return -1;
-    // }
-
-    // if we have come here we have verified the tag before.
     return plaintext_len;
 }
 
@@ -606,14 +568,12 @@ int gcm_seek_decrypt(unsigned char* ciphertext, int ciphertext_len,
 int encryption(unsigned char* plaintext, int plaintext_len, const std::string& key, const std::string& path) {
     unsigned char iv[iv_len];
 
-
-
     unsigned char keyBuf[32];
     unsigned char hash[32];
     SHA256((const unsigned char*)key.c_str(), key.size(), hash);
     unsigned char* keyhash = hash;
     unsigned char tag[tag_len];
-    unsigned char ciphertext[plaintext_len + 32];
+    unsigned char ciphertext[plaintext_len + 16];
     int l = gcm_encrypt(plaintext, plaintext_len, NULL, 0, keyhash, iv, iv_len, ciphertext, tag);
     FILE* f = fopen(path.c_str(), "w");
 
@@ -640,8 +600,9 @@ std::vector<Meta> decryption_read_meta(FILE* f, const std::string& key) {
     SHA256((const unsigned char*)key.c_str(), key.size(), hash);
     unsigned char* keyhash = hash;
     fseek(f, -tag_len - iv_len, SEEK_END);
-    fread(iv, 1, tag_len, f);
-    fread(tag, 1, iv_len, f);
+    fread(iv, 1, iv_len, f);
+    fread(tag, 1, tag_len, f);
+
 
     fseek(f, 0, SEEK_END);
     int l = ftell(f);
@@ -685,4 +646,34 @@ std::vector<Meta> readAllMeta(unsigned char* buf, int fileSize, bool e) {
         i += rec;
     }
     return metas;
+}
+
+/**
+ * read from beginning to size + start's end block, decrypt, store in buffer
+*/
+int decryption_read_data(FILE* f, const std::string& key, int start, int size, unsigned char* buf) {
+    unsigned char iv[iv_len];
+    unsigned char tag[tag_len];
+    unsigned char keyBuf[32];
+    unsigned char hash[32];
+    SHA256((const unsigned char*)key.c_str(), key.size(), hash);
+    unsigned char* keyhash = hash;
+    fseek(f, -tag_len - iv_len, SEEK_END);
+    fread(iv, 1, tag_len, f);
+    fread(tag, 1, iv_len, f);
+
+
+    fseek(f, 0, SEEK_SET);
+
+    // if start + size is not a multiple of aes_block_size, pad the full length to full block
+    int to_read = start + size;
+    if (to_read % aes_block_size != 0) {
+        to_read += aes_block_size - to_read % aes_block_size;
+    }
+    unsigned char* ciphertext = new unsigned char[to_read];
+    fread(ciphertext, 1, to_read, f);
+    unsigned char plaintext[to_read];
+    int plain_len = gcm_seek_decrypt(ciphertext, to_read, NULL, 0, tag, keyhash, iv, iv_len, plaintext, start, start + size);
+    memcpy(buf, plaintext + start, size);
+    return 0;
 }

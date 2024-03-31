@@ -133,3 +133,5 @@ int encryption(unsigned char* plaintext, int plaintext_len, const std::string& k
 std::vector<Meta> decryption_read_meta(FILE* f, const std::string& key);
 
 std::vector<Meta> readAllMeta(unsigned char* buf, int fileSize, bool e);
+
+int decryption_read_data(FILE* f, const std::string& key, int start, int size, unsigned char* buf);
