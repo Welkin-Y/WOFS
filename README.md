@@ -12,7 +12,6 @@
 ├── README.md
 ├── run_test.sh
 ├── src
-│   ├── encryption.cpp
 │   ├── log.c
 │   ├── log.h
 │   ├── params.h
