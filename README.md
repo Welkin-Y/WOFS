@@ -22,9 +22,11 @@
     ├── test.cpp
     └── try.cpp
 ```
+## Test Environment
++ Ubuntu 22.04.4 LTS
 
 ## Compile project
-
++ `sudo apt-get install libssl-dev -y`
 + `make`
 + `./build/wofs`
 
