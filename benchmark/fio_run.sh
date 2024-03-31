@@ -2,7 +2,7 @@
 
 # Define variables
 TEST_DIR="wofs_test"
-IMAGE_FILE="wofs_image.img"
+IMAGE_FILE="wofs_image"
 MOUNT_POINT="mnt"
 RESULTS_DIR="result"
 TEST_FILE_SIZE="1G" # Adjust file size as needed
@@ -19,13 +19,10 @@ cd ..
 
 # Generate WOFS image
 echo "Generating WOFS image..."
-./wofs -g "$TEST_DIR" "$IMAGE_FILE"
+../build/wofs -g "$TEST_DIR" "$IMAGE_FILE"
 
-# Ensure mount point exists
-if [ ! -d "$MOUNT_POINT" ]; then
-    echo "Mount point $MOUNT_POINT does not exist."
-    exit 1
-fi
+mkdir -p "$MOUNT_POINT"
+../build/wofs "$IMAGE_FILE" "$MOUNT_POINT"
 
 # Ensure fio is installed
 if ! command -v fio &> /dev/null; then
@@ -38,10 +35,16 @@ mkdir -p "$RESULTS_DIR"
 
 # Sequential read test
 echo "Running sequential read test..."
-fio --name=read_seq --filename="$MOUNT_POINT/file1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --runtime=30s --time_based --output="$RESULTS_DIR/sequential_read.txt"
+fio --directory="/tmp" --name=read_seq --filename="$MOUNT_POINT/file1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --runtime=30s --time_based --output="$RESULTS_DIR/sequential_read.txt"
 
 # Random read test
 echo "Running random read test..."
-fio --name=read_rand --filename="$MOUNT_POINT/file1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --runtime=30s --time_based --output="$RESULTS_DIR/random_read.txt"
+fio --directory="/tmp" --name=read_rand --filename="$MOUNT_POINT/file1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --runtime=30s --time_based --output="$RESULTS_DIR/random_read.txt"
 
 echo "Benchmarking complete. Results saved in $RESULTS_DIR."
+
+rm -rf $TEST_DIR
+umount $MOUNT_POINT
+
+rm -rf $MOUNT_POINT
+rm $IMAGE_FILE
