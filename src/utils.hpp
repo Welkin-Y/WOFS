@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -14,6 +15,11 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
 
 #include <iostream>
 #include <vector>
@@ -105,3 +111,25 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file);
 
 int generateImage(const std::string& directory, const std::string& image);
 
+
+
+// GCM mode of operation: still needs hmac? 
+
+int gcm_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* aad,
+    int aad_len, unsigned char* key, unsigned char* iv, int iv_len,
+    unsigned char* ciphertext, unsigned char* tag);
+
+int gcm_decrypt(unsigned char* ciphertext, int ciphertext_len,
+    unsigned char* aad, int aad_len, unsigned char* tag,
+    unsigned char* key, unsigned char* iv, int iv_len,
+    unsigned char* plaintext);
+
+int gcm_seek_decrypt(unsigned char* ciphertext, int ciphertext_len,
+    unsigned char* aad, int aad_len, unsigned char* tag,
+    unsigned char* key, unsigned char* iv, int iv_len,
+    unsigned char* plaintext, int start, int end);
+
+int encryption(unsigned char* plaintext, int plaintext_len, const std::string& key, const std::string& path);
+std::vector<Meta> decryption_read_meta(FILE* f, const std::string& key);
+
+std::vector<Meta> readAllMeta(unsigned char* buf, int fileSize, bool e);

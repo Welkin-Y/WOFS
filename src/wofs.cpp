@@ -15,6 +15,8 @@
 int blk_size;
 TreeNode* root_node;
 FILE* imageFile;
+bool encrypted = false;
+
 /**
  * creates a wofs image with files in path, stored in image_path
  * @param path path to directory
