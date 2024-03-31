@@ -33,15 +33,17 @@ fi
 # Ensure fio results directory exists
 mkdir -p "$RESULTS_DIR"
 
+mkdir -p "/tmp/t1"
+
 # Sequential read test
 echo "Running sequential read test..."
-echo 3 > /proc/sys/vm/drop_caches
-fio --directory="/tmp" --name=read_seq --filename="$MOUNT_POINT/file$1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --runtime=30s --time_based --output="$RESULTS_DIR/sread_file$1.txt"
+# echo 3 > /proc/sys/vm/drop_caches
+fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT/file$1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --runtime=30s --time_based --output="$RESULTS_DIR/sread_file$1.txt"
 
 # Random read test
 echo "Running random read test..."
-echo 3 > /proc/sys/vm/drop_caches
-fio --directory="/tmp" --name=read_rand --filename="$MOUNT_POINT/file$1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --runtime=30s --time_based --output="$RESULTS_DIR/rread_file$1.txt"
+# echo 3 > /proc/sys/vm/drop_caches
+fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT/file$1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --runtime=30s --time_based --output="$RESULTS_DIR/rread_file$1.txt"
 
 echo "Benchmarking complete. Results saved in $RESULTS_DIR."
 
@@ -50,3 +52,5 @@ umount $MOUNT_POINT
 
 rm -rf $MOUNT_POINT
 rm $IMAGE_FILE
+
+rm -rf "/tmp/t1"
