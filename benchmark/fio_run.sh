@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Define variables
-TEST_DIR="wofs_test"
-IMAGE_FILE="wofs_image"
-MOUNT_POINT="mnt"
+TEST_DIR="/tmp/wofs_test"
+IMAGE_FILE="/tmp/wofs_image"
+MOUNT_POINT="/tmp/mnt"
 RESULTS_DIR="result"
 TEST_FILE_SIZE="1G" # Adjust file size as needed
 NUM_JOBS=4 # Number of parallel jobs to run, adjust as needed
@@ -11,11 +11,11 @@ NUM_JOBS=4 # Number of parallel jobs to run, adjust as needed
 # Create test directory and files
 echo "Creating test directory and files..."
 mkdir -p "$TEST_DIR"
-cd "$TEST_DIR" || exit
-for i in {1..10}; do
-    dd if=/dev/zero of=file"$i".txt bs=1M count=10
+# cd "$TEST_DIR" || exit
+for i in {0..1000}; do
+    dd if=/dev/zero of="$TEST_DIR"/file"$i".txt bs=1K count=10
 done
-cd ..
+# cd ..
 
 # Generate WOFS image
 echo "Generating WOFS image..."
@@ -35,15 +35,24 @@ mkdir -p "$RESULTS_DIR"
 
 mkdir -p "/tmp/t1"
 
-# Sequential read test
-echo "Running sequential read test..."
-# echo 3 > /proc/sys/vm/drop_caches
-fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT/file$1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --runtime=30s --time_based --output="$RESULTS_DIR/sread_file$1.txt"
+for ((n = 0; n <= 1000; n += 100)); do
+    # Sequential read test
+    # echo "Running sequential read test..."
+    # echo 3 > /proc/sys/vm/drop_caches
+    for i in {1..5}; do
+        fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT/file500.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR/mnt_sread_"$i"_file_"$n".txt"
 
-# Random read test
-echo "Running random read test..."
-# echo 3 > /proc/sys/vm/drop_caches
-fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT/file$1.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --runtime=30s --time_based --output="$RESULTS_DIR/rread_file$1.txt"
+
+        fio --directory="/tmp/t1" --name=read_seq --filename="$TEST_DIR/file500.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --output="$RESULTS_DIR/org_sread_"$i"_file_"$n".txt"
+
+        # Random read test
+        # echo "Running random read test..."
+        # echo 3 > /proc/sys/vm/drop_caches
+        fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT/file500.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread  --output="$RESULTS_DIR/mnt_rread_"$i"_file_"$n".txt"
+
+        fio --directory="/tmp/t1" --name=read_rand --filename="$TEST_DIR/file500.txt" --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --output="$RESULTS_DIR/org_rread_"$i"_file_"$n".txt"
+    done
+done
 
 echo "Benchmarking complete. Results saved in $RESULTS_DIR."
 
