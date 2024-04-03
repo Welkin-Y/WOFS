@@ -37,7 +37,9 @@ int wo_make_image(const char* path, const char* image_path) {
     if (c == 'Y' || c == 'y') {
         std::string key;
         std::cout << "Enter the key: ";
+        system("stty -echo");
         std::cin >> key;
+        system("stty echo");
         encrypt(image_path, key);
         std::cout << "image encrypted as " << image_path << ".enc\n";
         remove(image_path);
@@ -359,24 +361,6 @@ int main(int argc, char* argv[]) {
     stat(wo_data->rootdir, st);
     blk_size = st->st_size;
 
-    // Meta root = Meta("", -1, 3200, 0777, 0, 0, true);
-    // fprintf(stderr, "root: %s\n", root.getName().c_str());
-    // root_node = new TreeNode(root);
-    // Meta f1 = Meta("file1", -1, 400, 0777, 0, 0, false);
-    // TreeNode* f1_node = new TreeNode(f1);
-    // root_node->setChild(f1_node);
-
-    // Meta f2 = Meta("file2", -1, 400, 0777, 0, 0, false);
-    // TreeNode* f2_node = new TreeNode(f2);
-    // f1_node->setSibling(f2_node);
-
-    // Meta f3 = Meta("dir1", -1, 720, 0777, 0, 0, true);
-    // TreeNode* f3_node = new TreeNode(f3);
-    // f2_node->setSibling(f3_node);
-
-    // Meta f4 = Meta("dir1/file3", -1, 400, 0777, 0, 0, false);
-    // TreeNode* f4_node = new TreeNode(f4);
-    // f3_node->setChild(f4_node);
 
     std::cout << "is the image encrypted? [Y/N]\n";
     char c;
@@ -386,7 +370,10 @@ int main(int argc, char* argv[]) {
         encrypted = true;
 
         std::cout << "Enter the key: ";
+        // hide input 
+        system("stty -echo");
         std::cin >> key;
+        system("stty echo");
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
     }
 
