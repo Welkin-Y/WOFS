@@ -101,6 +101,7 @@ Meta parseImageMeta(char* buffer, int metaLen);
 Meta readMeta(FILE* f);
 
 std::vector<Meta> readAllMeta(FILE* f);
+std::vector<Meta> readAllMeta(char* buffer, int size);
 
 TreeNode* generateTree(std::vector<Meta> metaList);
 
@@ -111,27 +112,15 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file);
 
 int generateImage(const std::string& directory, const std::string& image);
 
+// int ecb_encrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
+// int ecb_decrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
 
+int encrypt(const std::string& path, const std::string& key);
+int decrypt(FILE* f, unsigned char* keyhash, int st_blk, int ed_blk, unsigned char* buffer);
 
-// GCM mode of operation: still needs hmac? 
+// int getImageSize(const std::string& path);
 
-int gcm_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* aad,
-    int aad_len, unsigned char* key, unsigned char* iv, int iv_len,
-    unsigned char* ciphertext, unsigned char* tag);
+int readEncImage(FILE* f, unsigned char* keyhash, unsigned char* buffer, int begin, int len);
+std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash);
 
-int gcm_decrypt(unsigned char* ciphertext, int ciphertext_len,
-    unsigned char* aad, int aad_len, unsigned char* tag,
-    unsigned char* key, unsigned char* iv, int iv_len,
-    unsigned char* plaintext);
-
-int gcm_seek_decrypt(unsigned char* ciphertext, int ciphertext_len,
-    unsigned char* aad, int aad_len, unsigned char* tag,
-    unsigned char* key, unsigned char* iv, int iv_len,
-    unsigned char* plaintext, int start, int end);
-
-int encryption(unsigned char* plaintext, int plaintext_len, const std::string& key, const std::string& path);
-std::vector<Meta> decryption_read_meta(FILE* f, const std::string& key);
-
-std::vector<Meta> readAllMeta(unsigned char* buf, int fileSize, bool e);
-
-int decryption_read_data(FILE* f, const std::string& key, int start, int size, unsigned char* buf);
+int verify(FILE* f, unsigned char* keyhash);

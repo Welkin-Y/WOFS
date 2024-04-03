@@ -15,7 +15,10 @@
 int blk_size;
 TreeNode* root_node;
 FILE* imageFile;
+std::string imgPath;
 bool encrypted = false;
+int aes_blk_size = 32;
+unsigned char keyhash[SHA256_DIGEST_LENGTH];
 
 /**
  * creates a wofs image with files in path, stored in image_path
@@ -28,6 +31,17 @@ int wo_make_image(const char* path, const char* image_path) {
 
     fprintf(stderr, "making image from %s to %s\n", path, image_path);
     generateImage(path, image_path);
+    std::cout << "Do you need to encrypt the image? [Y/N]\n";
+    char c;
+    std::cin >> c;
+    if (c == 'Y' || c == 'y') {
+        std::string key;
+        std::cout << "Enter the key: ";
+        std::cin >> key;
+        encrypt(image_path, key);
+        std::cout << "image encrypted as " << image_path << ".enc\n";
+        remove(image_path);
+    }
     return EXIT_SUCCESS;
 }
 
@@ -121,8 +135,15 @@ int wo_opendir(const char* path, struct fuse_file_info* fi) {
 }
 
 int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
-    log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-        path, buf, size, offset, fi);
+    if (encrypted) {
+        log_msg("encrypted wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+            path, buf, size, offset, fi);
+    }
+    else {
+        log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+
+            path, buf, size, offset, fi);
+    }
     TreeNode* found = root_node->find(path);
     if (!found) {
         return -ENOENT;
@@ -135,6 +156,22 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     long s = (long)size > f_size - offset ? f_size - offset : size;
     memset(buf, 0, size);
     log_msg("   Found file: start: %ld, size: %ld\n", found->getMeta().getStart(), f_size);
+
+    if (encrypted) {
+        log_msg("reading encrypted file\n   keyhash: ");
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+            log_msg("%02x", keyhash[i]);
+        }
+        log_msg("\n");
+        log_msg("pos of buffer: %p\n", buf);
+        log_msg("offset: %ld\n", found->getMeta().getStart() + offset);
+        log_msg("size: %ld\n", s);
+        int ofs = found->getMeta().getStart() + offset;
+
+        readEncImage(imageFile, keyhash, (unsigned char*)buf, ofs, s);
+
+        return s;
+    }
     fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
     return fread(buf, 1, s, imageFile);
     // log_msg("%s\n",buf);
@@ -340,12 +377,40 @@ int main(int argc, char* argv[]) {
     // Meta f4 = Meta("dir1/file3", -1, 400, 0777, 0, 0, false);
     // TreeNode* f4_node = new TreeNode(f4);
     // f3_node->setChild(f4_node);
-    imageFile = fopen(wo_data->rootdir, "r");
-    if (imageFile == nullptr) {
-        perror("Error: Cannot open the image file for file system\n");
-        return EXIT_FAILURE;
+
+    std::cout << "is the image encrypted? [Y/N]\n";
+    char c;
+    std::cin >> c;
+    std::string key;
+    if (c == 'Y' || c == 'y') {
+        encrypted = true;
+
+        std::cout << "Enter the key: ";
+        std::cin >> key;
+        SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
     }
-    std::vector<Meta> metaList = readAllMeta(imageFile);
+
+    std::vector<Meta> metaList;
+    if (encrypted) {
+        SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
+        imageFile = fopen(wo_data->rootdir, "r");
+        try {
+            metaList = readEncMeta(imageFile, keyhash);
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+        //imageFile = fopen(wo_data->rootdir, "r");
+    }
+    else {
+        imageFile = fopen(wo_data->rootdir, "r");
+        if (imageFile == nullptr) {
+            perror("Error: Cannot open the image file for file system\n");
+            return EXIT_FAILURE;
+        }
+        metaList = readAllMeta(imageFile);
+    }
     std::cout << "Found " << metaList.size() << " meta data\n";
     root_node = generateTree(metaList);
     // turn over control to fuse
