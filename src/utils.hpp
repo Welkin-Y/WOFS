@@ -23,12 +23,19 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <map>
+
+struct BlockInfo {
+    long start;
+    long size;
+};
 
 class Meta {
 
     std::string name; // full path
     long start;
     long size;
+    std::vector<BlockInfo> block_info;
     unsigned int permission;
     unsigned int owner;
     unsigned int group;

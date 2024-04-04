@@ -1,6 +1,6 @@
 #include "utils.hpp"
-#include <map>
 
+std::map<std::string, long> blockHashToPositionMap;
 size_t iv_len = 32;
 size_t tag_len = 16;
 int aes_block_size = 32;
@@ -14,7 +14,9 @@ Meta::Meta(
     unsigned int owner,
     unsigned int group,
     bool isDir,
-    time_t lastModified) : name(name), start(start), size(size), permission(permission), owner(owner), group(group), isDir(isDir), lastModified(lastModified) {}
+    time_t lastModified): name(name), start(start), size(size), permission(permission), owner(owner), group(group), isDir(isDir), lastModified(lastModified) {
+    this->block_info = std::vector<BlockInfo>{BlockInfo({start, size})};
+}
 
 // Getters 
 std::string Meta::getName() { return this->name; }
