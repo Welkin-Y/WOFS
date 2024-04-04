@@ -349,17 +349,20 @@ int handle_mount_command(int argc, char* argv[]) {
         wo_mount_usage();
         return EXIT_FAILURE;
     }
-    for (int i = 2; i < argc - 2; i++) { // Skip command and last two arguments (image file and mount point)
-        if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--decrypt") == 0) {
+    argc--;
+    for(int j=1; j<argc; j++) {
+        argv[j] = argv[j+1];
+    }
+    argv[argc] = NULL;
+    for (int i = 1; i < argc - 2; i++) { // Skip command and last two arguments (image file and mount point)
+        if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
             encrypted = true; 
-        } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-            wo_mount_usage();
-            return EXIT_SUCCESS;
-        } else {
-            fprintf(stderr, "Unknown or unsupported option: %s\n", argv[i]);
-            wo_mount_usage();
-            return EXIT_FAILURE;
-        }
+            argc--;
+            for(int j = i; j < argc; j++) {
+                argv[j] = argv[j + 1];
+            }
+            argv[argc] = NULL;
+        } 
     }
 
     // Extract image file and mount point from the last two arguments
@@ -373,10 +376,13 @@ int handle_mount_command(int argc, char* argv[]) {
         abort();
     }
 
-    wo_data->rootdir = realpath(imageFilePath, NULL);
-    argv[1] = argv[argc - 1];
-    // argv[argc - 1] = NULL;
-    // argc--;
+    wo_data->rootdir = realpath(argv[argc - 2], NULL);
+
+    argv[argc - 2] = argv[argc - 1];
+    argv[argc - 1] = NULL;
+    argc--;
+
+
 
     wo_data->logfile = log_open();
 
@@ -398,7 +404,7 @@ int handle_mount_command(int argc, char* argv[]) {
     std::vector<Meta> metaList;
     if (encrypted) {
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
-        FILE* imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "r");
         try {
             metaList = readEncMeta(imageFile, keyhash);
         }
@@ -409,7 +415,7 @@ int handle_mount_command(int argc, char* argv[]) {
         imageFile = fopen(wo_data->rootdir, "r");
     }
     else {
-        FILE* imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "r");
         if (imageFile == nullptr) {
             perror("Error: Cannot open the image file for file system\n");
             return EXIT_FAILURE;
@@ -420,7 +426,11 @@ int handle_mount_command(int argc, char* argv[]) {
     root_node = generateTree(metaList);
     // turn over control to fuse
     fprintf(stderr, "about to call fuse_main\n");
-    fuse_stat = fuse_main(2, argv, &wo_oper, wo_data);
+    for(int i=0;i<argc;i++) {
+        std::cout << argv[i] << " ";
+    } 
+    std::cout << std::endl;
+    fuse_stat = fuse_main(argc, argv, &wo_oper, wo_data);
     fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
 
 
