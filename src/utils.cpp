@@ -201,17 +201,7 @@ std::vector<Meta> readAllMeta(FILE* f) {
     return metas;
 }
 
-std::vector<Meta> readAllMeta(char* buffer, int size) {
-    int p = *(int*)(buffer + size - sizeof(int));
-    std::vector<Meta> metas;
-    int i = 0;
-    while (i < p) {
-        int metaLen = *(int*)(buffer + i);
-        metas.push_back(parseImageMeta(buffer + i, metaLen));
-        i += metaLen;
-    }
-    return metas;
-}
+
 
 TreeNode* generateTree(std::vector<Meta> metaList) {
     std::map<std::string, TreeNode*> record;
@@ -282,7 +272,8 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
         writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), it->getLastModified(), file);
     }
-    // std::cout << "p rests at " << ftell(file) << std::endl;
+    std::cout << "p rests at " << ftell(file) << std::endl;
+    std::cout << "p is " << p << std::endl;
     fwrite(&p, sizeof(p), 1, file);
 
     return 0;
@@ -673,19 +664,14 @@ std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash) {
     int imgsize = getImageSize(f);
     fseek(f, 0, SEEK_SET);
     unsigned char buffer[sizeof(int)];
-    unsigned char dffs[imgsize];
-    if (!readEncImage(f, keyhash, dffs, 0, imgsize)) {
-        fprintf(stderr, "Error: failed to read image when doing dffs read\n");
-        throw std::runtime_error("failed to read image");
-    }
-    int x;
-    memcpy(&x, dffs + imgsize - sizeof(int), sizeof(int));
+
     if (!readEncImage(f, keyhash, buffer, imgsize - sizeof(int), sizeof(int))) {
         fprintf(stderr, "Error: failed to read image when doing imgsize read\n");
         throw std::runtime_error("failed to read image");
     }
     int p;
     memcpy(&p, buffer, sizeof(int));
+    std::cout << "p: " << p << std::endl;
     unsigned char metaBuffer[imgsize - p];
     if (!readEncImage(f, keyhash, metaBuffer, p, imgsize - p)) {
         fprintf(stderr, "Error: failed to read image when doing meta read\n");
@@ -693,5 +679,19 @@ std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash) {
 
     }
     std::vector<Meta> metas = readAllMeta((char*)metaBuffer, imgsize - p);
+    return metas;
+}
+
+std::vector<Meta> readAllMeta(char* buffer, int size) {
+    std::vector<Meta> metas;
+    int i = 0;
+    while (i < size - sizeof(int)) {
+        int metaLen;
+        memcpy(&metaLen, buffer + i, sizeof(int));
+        Meta m = parseImageMeta(buffer + i, metaLen);
+        metas.push_back(m);
+        i += metaLen;
+
+    }
     return metas;
 }
