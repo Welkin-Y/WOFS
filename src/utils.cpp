@@ -201,7 +201,17 @@ std::vector<Meta> readAllMeta(FILE* f) {
     return metas;
 }
 
-
+std::vector<Meta> readAllMeta(char* buffer, int size) {
+    int p = *(int*)(buffer + size - sizeof(int));
+    std::vector<Meta> metas;
+    int i = 0;
+    while (i < p) {
+        int metaLen = *(int*)(buffer + i);
+        metas.push_back(parseImageMeta(buffer + i, metaLen));
+        i += metaLen;
+    }
+    return metas;
+}
 
 TreeNode* generateTree(std::vector<Meta> metaList) {
     std::map<std::string, TreeNode*> record;
@@ -662,7 +672,13 @@ std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash) {
     int imgsize = getImageSize(f);
     fseek(f, 0, SEEK_SET);
     unsigned char buffer[sizeof(int)];
-
+    unsigned char dffs[imgsize];
+    if (!readEncImage(f, keyhash, dffs, 0, imgsize)) {
+        fprintf(stderr, "Error: failed to read image when doing dffs read\n");
+        throw std::runtime_error("failed to read image");
+    }
+    int x;
+    memcpy(&x, dffs + imgsize - sizeof(int), sizeof(int));
     if (!readEncImage(f, keyhash, buffer, imgsize - sizeof(int), sizeof(int))) {
         fprintf(stderr, "Error: failed to read image when doing imgsize read\n");
         throw std::runtime_error("failed to read image");
@@ -676,19 +692,5 @@ std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash) {
 
     }
     std::vector<Meta> metas = readAllMeta((char*)metaBuffer, imgsize - p);
-    return metas;
-}
-
-std::vector<Meta> readAllMeta(char* buffer, int size) {
-    std::vector<Meta> metas;
-    int i = 0;
-    while (i < size - sizeof(int)) {
-        int metaLen;
-        memcpy(&metaLen, buffer + i, sizeof(int));
-        Meta m = parseImageMeta(buffer + i, metaLen);
-        metas.push_back(m);
-        i += metaLen;
-
-    }
     return metas;
 }
