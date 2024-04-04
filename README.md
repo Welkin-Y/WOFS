@@ -37,8 +37,8 @@
 
 ## How to use
 
-+ To mount: wofs [options] <image file> <mount point>
-+ To generate image: wofs -g <directory> <image file>
++ To mount: wofs [options] \<image file> \<mount point>
++ To generate image: wofs -g \<directory> \<image file>
 done (for now)
 
 ## progress: 
@@ -56,6 +56,14 @@ done (for now)
 
 ## TODO:
 + root directory's permission and mtime still set arbitrarily
+
+### encryption
+
++ encrypt an image
++ HMAC
++ decrypt the image and build directory tree
++ read file content from encrypted image 
+
 
 ## Acknowledgements
 *TBD*

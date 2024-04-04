@@ -10,13 +10,14 @@
 
 #include "utils.hpp"
 
+
 /**
  * tests meta read/write
 */
 
-void traversal(TreeNode* curr){
-    if(!curr) return;
-    std::cout<<curr->getMeta().getName()<<std::endl;
+void traversal(TreeNode* curr) {
+    if (!curr) return;
+    std::cout << curr->getMeta().getName() << std::endl;
     traversal(curr->getChild());
     traversal(curr->getSibling());
 
@@ -61,9 +62,57 @@ int main() {
     }
 
 
-    std::cout<< "\n============\nTest Tree:\n";
+    std::cout << "\n============\nTest Tree:\n";
     TreeNode* root = generateTree(metas);
     traversal(root);
+
+
+    std::cout << "\n============\nTest Crypto:\n";
+
+
+
+
+
+    unsigned char iv[16];
+    memset(iv, 0, 16);
+    size_t iv_len = 16;
+    memcpy(iv, iv, iv_len);
+
+
+    const char plaintext[] = "0123456789abcdeflskfjwldewfoewowelgkewt4829ogvnewokn_fedcba9876544810_hello, this is robort calling. please standby... alright fire!!!!!";
+    unsigned char keyhash[32];
+
+    f = fopen("testfile", "w");
+    fwrite(plaintext, 1, strlen(plaintext), f);
+    fclose(f);
+
+    std::string key = "key";
+    SHA256((const unsigned char*)key.c_str(), key.size(), keyhash);
+
+    encrypt("testfile", "key");
+    unsigned char buffer[96];
+    memset(buffer, 0, 64);
+    f = fopen("testfile.enc", "r");
+    decrypt(f, keyhash, 1, 3, buffer);
+
+    unsigned char buffer2[3];
+    fclose(f);
+    f = fopen("testfile.enc", "r");
+    readEncImage(f, keyhash, buffer2, 0, 3);
+
+    fclose(f);
+    generateImage("d0", "testimage");
+    f = fopen("testimage", "r");
+    unsigned char buf[688];
+    fread(buf, 1, 688, f);
+    fclose(f);
+    encrypt("testimage", "key");
+    f = fopen("testimage.enc", "r");
+    std::vector<Meta> metas2 = readEncMeta(f, keyhash);
+    for (int i = 0; i < metas2.size(); i++) {
+        std::cout << metas2[i].getName() << std::endl;
+    }
+    fclose(f);
     return 0;
 
 }

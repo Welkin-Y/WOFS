@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -14,6 +15,11 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
 
 #include <iostream>
 #include <vector>
@@ -95,6 +101,7 @@ Meta parseImageMeta(char* buffer, int metaLen);
 Meta readMeta(FILE* f);
 
 std::vector<Meta> readAllMeta(FILE* f);
+std::vector<Meta> readAllMeta(char* buffer, int size);
 
 TreeNode* generateTree(std::vector<Meta> metaList);
 
@@ -105,3 +112,15 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file);
 
 int generateImage(const std::string& directory, const std::string& image);
 
+// int ecb_encrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
+// int ecb_decrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
+
+int encrypt(const std::string& path, const std::string& key);
+int decrypt(FILE* f, unsigned char* keyhash, int st_blk, int ed_blk, unsigned char* buffer);
+
+// int getImageSize(const std::string& path);
+
+int readEncImage(FILE* f, unsigned char* keyhash, unsigned char* buffer, int begin, int len);
+std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash);
+
+int verify(FILE* f, unsigned char* keyhash);
