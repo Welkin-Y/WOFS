@@ -425,7 +425,7 @@ int handle_mount_command(int argc, char* argv[]) {
 
 
     // dummy root 
-        // Info
+    // Info
     printf("Mounting image file '%s' to mount point '%s'. Decryption: %s\n",
            imageFilePath, mountPoint, decrypt ? "enabled" : "disabled");
 
@@ -455,16 +455,6 @@ int wo_options(int argc, char* argv[]) {
         wo_usage();
         return EXIT_FAILURE;
     }
-    // // other options
-    // if (strcmp(argv[1], "-g") == 0) {
-    //     if (argc < 4) {
-    //         wo_usage();
-    //         return EXIT_FAILURE;
-    //     }
-    //     wo_make_image(argv[2], argv[3]);
-    //     return EXIT_FAILURE;
-    // }
-    // no options
     return EXIT_SUCCESS;
 }
 
