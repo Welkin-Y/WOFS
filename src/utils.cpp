@@ -174,10 +174,10 @@ Meta parseImageMeta(char* buffer, int metaLen) {
 */
 Meta readMeta(FILE* f) {
     int metaLen;
-    fread(&metaLen, sizeof(metaLen), 1, f);
+    int len = fread(&metaLen, sizeof(metaLen), 1, f);
     char* buffer = new char[metaLen];
     memcpy(buffer, &metaLen, sizeof(metaLen));
-    fread(buffer + sizeof(metaLen), 1, metaLen - sizeof(metaLen), f);
+    len = fread(buffer + sizeof(metaLen), 1, metaLen - sizeof(metaLen), f);
     Meta m = parseImageMeta(buffer, metaLen);
     delete buffer;
     return m;
@@ -189,7 +189,7 @@ std::vector<Meta> readAllMeta(FILE* f) {
     int fileSize = ftell(f);
     fseek(f, -(long)sizeof(int), SEEK_END);
     int p;
-    fread(&p, (int)sizeof(int), 1, f);
+    int len = fread(&p, (int)sizeof(int), 1, f);
     // std::cout << "fileSize: " << fileSize << std::endl;
     // std::cout << "p: " << p << std::endl;
     // start from position p, read all meta
@@ -272,8 +272,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
         writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), it->getLastModified(), file);
     }
-    std::cout << "p rests at " << ftell(file) << std::endl;
-    std::cout << "p is " << p << std::endl;
+    // std::cout << "p rests at " << ftell(file) << std::endl;
     fwrite(&p, sizeof(p), 1, file);
 
     return 0;
@@ -300,7 +299,7 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                 toWrite = fopen((directory + "/" + ent->d_name).c_str(), "r");
                 // write toWrite to image
                 char* buffer = new char[st.st_size];
-                fread(buffer, 1, st.st_size, toWrite);
+                int len = fread(buffer, 1, st.st_size, toWrite);
                 fwrite(buffer, 1, st.st_size, f);
                 delete buffer;
                 fclose(toWrite);
@@ -375,7 +374,7 @@ int generateImage(const std::string& directory, const std::string& image) {
 
 
 // copied from my ECE 560 homework, which was copied from https://wiki.openssl.org/index.php/EVP_Authenticated_Encryption_and_Decryption
-int handleError() {
+void handleError() {
     ERR_print_errors_fp(stderr);
 }
 
@@ -525,9 +524,9 @@ int decrypt(FILE* f, unsigned char* keyhash, int st_blk, int ed_blk, unsigned ch
 
     fseek(f, -aes_block_size - sizeof(int), SEEK_END);
     unsigned char iv[aes_block_size];
-    fread(iv, 1, aes_block_size, f);
+    int len = fread(iv, 1, aes_block_size, f);
     int fileSize;
-    fread(&fileSize, 1, sizeof(int), f);
+    len = fread(&fileSize, 1, sizeof(int), f);
 
     if (st_blk * aes_block_size > fileSize) {
         fprintf(stderr, "Error: start block is out of range: start block is %d, file size is %d\n", st_blk * aes_block_size, fileSize);
@@ -542,7 +541,6 @@ int decrypt(FILE* f, unsigned char* keyhash, int st_blk, int ed_blk, unsigned ch
     unsigned char cipher_buff[aes_block_size];
     unsigned char plain_buff[aes_block_size];
 
-    int len;
     update_iv(iv, st_blk);
     for (int i = st_blk; i <= ed_blk; i++) {
         len = fread(plain_buff, 1, aes_block_size, f);
@@ -562,7 +560,7 @@ int getImageSize(FILE* f) {
 
     fseek(f, -sizeof(int), SEEK_END);
     int p;
-    fread(&p, sizeof(int), 1, f);
+    int len = fread(&p, sizeof(int), 1, f);
 
     return p;
 }
@@ -577,7 +575,7 @@ int verify(FILE* f, unsigned char* keyhash) {
     int enc_size = ftell(f);
     // std::cout << "enc_size: " << enc_size << std::endl;
     unsigned char hmac[aes_block_size];
-    fread(hmac, 1, aes_block_size, f);
+    int len = fread(hmac, 1, aes_block_size, f);
     unsigned char dec[aes_block_size];
     ecb_decrypt(hmac, aes_block_size, dec, keyhash);
     // std::cout << "decrypted hmac: \n";
@@ -603,7 +601,7 @@ int verify(FILE* f, unsigned char* keyhash) {
     while (true) {
         int l = aes_block_size;
 
-        fread(buffer, 1, l, f);
+        int len = fread(buffer, 1, l, f);
 
         if (1 != EVP_DigestUpdate(mdctx, buffer, aes_block_size)) {
             handleError();
@@ -671,7 +669,6 @@ std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash) {
     }
     int p;
     memcpy(&p, buffer, sizeof(int));
-    std::cout << "p: " << p << std::endl;
     unsigned char metaBuffer[imgsize - p];
     if (!readEncImage(f, keyhash, metaBuffer, p, imgsize - p)) {
         fprintf(stderr, "Error: failed to read image when doing meta read\n");

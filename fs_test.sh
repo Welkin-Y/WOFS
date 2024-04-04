@@ -18,17 +18,24 @@ cd ../.. && mkdir d4  > /dev/null 2>&1
 cd d4 
 echo "12345678910" > f6
 cd ../../
-./test
+./wofs gen d0 testImage
 mkdir mountpoint > /dev/null 2>&1
 cd d0
 tree > ../d0.tree
 cd ..
-./wofs testImage mountpoint
+./wofs mount testImage mountpoint
 cd mountpoint
 tree > ../mountpoint.tree
 cd ..
 echo "compare file strcture"
-diff d0.tree mountpoint.tree
-echo "Test completed successfully"
+# Compare the two directory trees
+if diff d0.tree mountpoint.tree; then
+    echo "Test completed successfully: No differences found."
+    umount mountpoint
+    exit 0
+else
+    echo "Test failed: Differences found."
+fi
 umount mountpoint
+exit 1
 # rm -r d0
