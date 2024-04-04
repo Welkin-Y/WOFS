@@ -23,14 +23,20 @@ mkdir mountpoint > /dev/null 2>&1
 
 ./wofs mount testImage mountpoint
 
-echo "compare file strcture"
+hd testImage
+
+strace cat mountpoint/f0
+
+echo "compare file structure"
 if diff -r d0 mountpoint; then
     echo "Data test completed successfully: No differences found."
     umount mountpoint
+    cat wofs.log
     exit 0
 else
     echo "Test failed: Differences found."
     umount mountpoint
+    cat wofs.log
     exit 1
 fi
 exit 1
