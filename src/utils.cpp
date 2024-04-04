@@ -268,7 +268,6 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
     // std::cout << "writing meta to image\n";
     fseek(file, 0, SEEK_END);
     int p = ftell(file);
-    // std::cout << "p: " << p << std::endl;
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
         writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), it->getLastModified(), file);
     }
@@ -283,7 +282,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
  * @brief helper function of generateImage
  * recursively write file into image and record meta
 */
-std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, long currPosition) {
+std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, long* currPosition) {
     std::vector<Meta> files;
     DIR* dir;
     struct dirent* ent;
@@ -295,6 +294,7 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
         while ((ent = readdir(dir)) != NULL) {
             stat((directory + "/" + ent->d_name).c_str(), &st);
             if (ent->d_type == DT_REG) {
+                std::cout << "writing file: " << directory + "/" + ent->d_name << "\n";
                 // file 
                 toWrite = fopen((directory + "/" + ent->d_name).c_str(), "r");
                 // write toWrite to image
@@ -305,10 +305,10 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                 fclose(toWrite);
                 int p = st.st_mode;
                 p &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
-                Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, p, st.st_uid, st.st_gid, false, st.st_mtime);
+                Meta m = Meta((relaDir + "/" + ent->d_name), *currPosition, st.st_size, p, st.st_uid, st.st_gid, false, st.st_mtime);
                 files.push_back(m);
-                currPosition += st.st_size;
-                // std::cout << "now the position is: " << currPosition << "\n";
+                *currPosition += st.st_size;
+                std::cout << "now the position is: " << *currPosition << "\n";
             }
 
             if (ent->d_type == DT_DIR) {
@@ -322,7 +322,7 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                     // fclose(toWrite);
                     int p = st.st_mode;
                     p &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
-                    Meta m = Meta((relaDir + "/" + ent->d_name), currPosition, st.st_size, p, st.st_uid, st.st_gid, true, st.st_mtime);
+                    Meta m = Meta((relaDir + "/" + ent->d_name), *currPosition, st.st_size, p, st.st_uid, st.st_gid, true, st.st_mtime);
                     files.push_back(m);
                     // currPosition += st.st_size;
                     // std::cout << "now the position is: " << currPosition << "\n";
@@ -363,7 +363,7 @@ int generateImage(const std::string& directory, const std::string& image) {
     long currPosition = 0;
     FILE* f = fopen(image.c_str(), "w");
     if (f != nullptr) {
-        files = genHelper(directory, "", f, currPosition);
+        files = genHelper(directory, "", f, &currPosition);
         writeAllMeta(files, f);
         fclose(f);
         return EXIT_SUCCESS;
