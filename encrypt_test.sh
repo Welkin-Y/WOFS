@@ -20,7 +20,7 @@ echo "12345678910" > f6
 cd ../../
 echo 123456 | ./wofs gen -e d0 testImage
 mkdir mountpoint > /dev/null 2>&1
-echo 123456 | ./wofs mount -d testImage.enc mountpoint
+echo 123456 | ./wofs mount -e testImage.enc mountpoint
 
 echo "compare file strcture"
 if diff -r d0 mountpoint; then
