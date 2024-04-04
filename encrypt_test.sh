@@ -18,12 +18,12 @@ cd ../.. && mkdir d4  > /dev/null 2>&1
 cd d4 
 echo "12345678910" > f6
 cd ../../
-./test
+echo 123456 | ./wofs gen -e d0 testImage
 mkdir mountpoint > /dev/null 2>&1
 cd d0
 tree > ../d0.tree
 cd ..
-./wofs testImage mountpoint
+echo 123456 | ./wofs mount -d testImage.enc mountpoint
 cd mountpoint
 tree > ../mountpoint.tree
 cd ..
@@ -31,4 +31,3 @@ echo "compare file strcture"
 diff d0.tree mountpoint.tree
 echo "Test completed successfully"
 umount mountpoint
-# rm -r d0
