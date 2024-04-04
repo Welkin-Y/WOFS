@@ -31,8 +31,11 @@ echo "compare file strcture"
 # Compare the two directory trees
 if diff d0.tree mountpoint.tree; then
     echo "Test completed successfully: No differences found."
+    umount mountpoint
+    exit 0
 else
     echo "Test failed: Differences found."
 fi
 umount mountpoint
+exit 1
 # rm -r d0
