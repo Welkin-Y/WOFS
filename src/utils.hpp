@@ -116,11 +116,11 @@ int generateImage(const std::string& directory, const std::string& image);
 // int ecb_decrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
 
 int encrypt(const std::string& path, const std::string& key);
-int decrypt(FILE* f, unsigned char* keyhash, int st_blk, int ed_blk, unsigned char* buffer);
+int decrypt(FILE* f, unsigned char* keyhash, size_t st_blk, size_t ed_blk, unsigned char* buffer);
 
 // int getImageSize(const std::string& path);
 
-int readEncImage(FILE* f, unsigned char* keyhash, unsigned char* buffer, int begin, int len);
+size_t readEncImage(FILE* f, unsigned char* keyhash, unsigned char* buffer, int begin, int len);
 std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash);
 
 int verify(FILE* f, unsigned char* keyhash);
