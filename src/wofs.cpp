@@ -34,9 +34,16 @@ int wo_make_image(const char* path, const char* image_path) {
     if (encrypted) {
         std::string key;
         std::cout << "Enter the key: ";
-        system("stty -echo");
+        if (system("stty -echo") != 0) {
+            perror("Error: Cannot hide input\n");
+
+        }
         std::cin >> key;
-        system("stty echo");
+        if (system("stty echo") != 0) {
+            perror("Error: Cannot show input\n");
+
+        }
+        std::cout << std::endl;
         encrypt(image_path, key);
         std::cout << "image encrypted as " << image_path << ".enc\n";
         remove(image_path);
@@ -141,7 +148,6 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     }
     else {
         log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-
             path, buf, size, offset, fi);
     }
     TreeNode* found = root_node->find(path);
@@ -168,12 +174,16 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         log_msg("size: %ld\n", s);
         int ofs = found->getMeta().getStart() + offset;
 
-        readEncImage(imageFile, keyhash, (unsigned char*)buf, ofs, s);
-
-        return s;
+        size_t res = readEncImage(imageFile, keyhash, (unsigned char*)buf, ofs, s);
+        log_msg("readEncImage done: read %ld bytes\n", s);
+        std::cout << "read " << res << " bytes from position " << ofs << std::endl;
+        return res;
     }
     fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
-    return fread(buf, 1, s, imageFile);
+
+    size_t r = fread(buf, 1, s, imageFile);
+    std::cout << "read " << r << " bytes\n";
+    return r;
     // log_msg("%s\n",buf);
     // return found->getMeta().getSize();
 }
@@ -395,16 +405,23 @@ int handle_mount_command(int argc, char* argv[]) {
     if (encrypted) {
         std::cout << "Enter the key: ";
         // hide input 
-        system("stty -echo");
+        if (system("stty -echo") != 0) {
+            perror("Error: Cannot hide input\n");
+
+        }
         std::cin >> key;
-        system("stty echo");
+        if (system("stty echo") != 0) {
+            perror("Error: Cannot show input\n");
+
+        }
+        std::cout << std::endl;
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
     }
 
     std::vector<Meta> metaList;
     if (encrypted) {
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
-        imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "rb");
         try {
             metaList = readEncMeta(imageFile, keyhash);
         }
@@ -415,7 +432,7 @@ int handle_mount_command(int argc, char* argv[]) {
         imageFile = fopen(wo_data->rootdir, "r");
     }
     else {
-        imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "rb");
         if (imageFile == nullptr) {
             perror("Error: Cannot open the image file for file system\n");
             return EXIT_FAILURE;
