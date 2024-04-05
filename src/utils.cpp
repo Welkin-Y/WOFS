@@ -213,17 +213,7 @@ std::vector<Meta> readAllMeta(FILE* f) {
     return metas;
 }
 
-std::vector<Meta> readAllMeta(char* buffer, int size) {
 
-    std::vector<Meta> metas;
-    size_t i = 0;
-    while (i < size - (sizeof(int))) {
-        int metaLen = *(int*)(buffer + i);
-        metas.push_back(parseImageMeta(buffer + i, metaLen));
-        i += metaLen;
-    }
-    return metas;
-}
 
 TreeNode* generateTree(std::vector<Meta> metaList) {
     std::map<std::string, TreeNode*> record;
@@ -709,5 +699,19 @@ std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash) {
 
     }
     std::vector<Meta> metas = readAllMeta((char*)metaBuffer, imgsize - p);
+    return metas;
+}
+
+std::vector<Meta> readAllMeta(char* buffer, int size) {
+    std::vector<Meta> metas;
+    int i = 0;
+    while (i < size - sizeof(int)) {
+        int metaLen;
+        memcpy(&metaLen, buffer + i, sizeof(int));
+        Meta m = parseImageMeta(buffer + i, metaLen);
+        metas.push_back(m);
+        i += metaLen;
+
+    }
     return metas;
 }

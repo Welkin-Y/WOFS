@@ -32,13 +32,15 @@
 + `./build/wofs`
 
 ## Run test
-
-+ `sh run_test.sh`
++ test file system
++ `sh fs_test.sh`
++ test encryption
++ `sh encrypt_test.sh`
 
 ## How to use
 
-+ To mount: wofs [options] \<image file> \<mount point>
-+ To generate image: wofs -g \<directory> \<image file>
++ To mount: wofs mount [options] \<image file> \<mount point>
++ To generate image: wofs gen [options] \<directory> \<image file>
 done (for now)
 
 ## progress: 
