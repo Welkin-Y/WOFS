@@ -8,8 +8,8 @@ int sha_len = 32;
 
 Meta::Meta(
     std::string name,
-    long start,
-    long size,
+    size_t start,
+    size_t size,
     unsigned int permission,
     unsigned int owner,
     unsigned int group,
@@ -18,8 +18,8 @@ Meta::Meta(
 
 // Getters 
 std::string Meta::getName() { return this->name; }
-long Meta::getStart() { return this->start; }
-long Meta::getSize() { return this->size; }
+size_t Meta::getStart() { return this->start; }
+size_t Meta::getSize() { return this->size; }
 unsigned int Meta::getPermission() { return this->permission; }
 unsigned int Meta::getOwner() { return this->owner; }
 unsigned int Meta::getGroup() { return this->group; }
@@ -152,9 +152,9 @@ std::vector<Meta> allFiles(const std::string& directory) {
 Meta parseImageMeta(char* buffer, int metaLen) {
     int nameLen = *(int*)(buffer + sizeof(int));
     std::string name = std::string(buffer + 2 * sizeof(int), nameLen);
-    long start = *(long*)(buffer + 2 * sizeof(int) + nameLen);
+    size_t start = *(size_t*)(buffer + 2 * sizeof(int) + nameLen);
     char* p = buffer + 2 * sizeof(int) + nameLen + sizeof(start);
-    long size = *(long*)p;
+    size_t size = *(size_t*)p;
     p += sizeof(size);
     unsigned int permission = *(unsigned int*)p;
     p += sizeof(permission);
@@ -231,7 +231,7 @@ TreeNode* generateTree(std::vector<Meta> metaList) {
 
 
 
-int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file) {
+int writeImageMeta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file) {
     int nameSize = name.size();
     int metaSize = 2 * sizeof(int) + nameSize + sizeof(start) + sizeof(size) + sizeof(permission) + sizeof(owner) + sizeof(group) + sizeof(isDir) + sizeof(time_t);
     char* buffer = new char[metaSize];

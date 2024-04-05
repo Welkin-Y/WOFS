@@ -28,18 +28,18 @@
 class Meta {
 
     std::string name; // full path
-    long start;
-    long size;
+    size_t start;
+    size_t size;
     unsigned int permission;
     unsigned int owner;
     unsigned int group;
     bool isDir;
     time_t lastModified;
 public:
-    Meta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified);
+    Meta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified);
     std::string getName();
-    long getStart();
-    long getSize();
+    size_t getStart();
+    size_t getSize();
     unsigned int getPermission();
     unsigned int getOwner();
     unsigned int getGroup();
@@ -106,7 +106,7 @@ std::vector<Meta> readAllMeta(char* buffer, int size);
 TreeNode* generateTree(std::vector<Meta> metaList);
 
 // For generate Image
-int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file);
+int writeImageMeta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file);
 
 int writeAllMeta(std::vector<Meta> metas, FILE* file);
 
