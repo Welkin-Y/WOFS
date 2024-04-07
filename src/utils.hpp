@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 
+
 class Meta {
 
     std::string name; // full path
@@ -116,11 +117,11 @@ int generateImage(const std::string& directory, const std::string& image);
 // int ecb_decrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
 
 int encrypt(const std::string& path, const std::string& key);
-int decrypt(FILE* f, unsigned char* keyhash, size_t st_blk, size_t ed_blk, unsigned char* buffer);
+int decrypt(int fd, size_t totalsize, unsigned char* keyhash, size_t st_blk, size_t ed_blk, unsigned char* buffer);
 
 // int getImageSize(const std::string& path);
 
-size_t readEncImage(FILE* f, unsigned char* keyhash, unsigned char* buffer, int begin, int len);
-std::vector<Meta> readEncMeta(FILE* f, unsigned char* keyhash);
+size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t begin, size_t len);
+std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
 
 int verify(FILE* f, unsigned char* keyhash);

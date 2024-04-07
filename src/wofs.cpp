@@ -11,14 +11,20 @@
 #include "log.h"
 #include "utils.hpp"
 
-
 int blk_size;
 TreeNode* root_node;
 FILE* imageFile;
 std::string imgPath;
 bool encrypted = false;
 int aes_blk_size = 32;
+int chunk_size = 1024;
+int fd = -1;
+size_t totalsize = 0;
+
+
 unsigned char keyhash[SHA256_DIGEST_LENGTH];
+
+
 
 /**
  * creates a wofs image with files in path, stored in image_path
@@ -108,7 +114,7 @@ int wo_getattr(const char* path, struct stat* statbuf) {
     log_msg("getattr: %s\n", path);
     TreeNode* t = root_node->find(path);
     if (t == nullptr) {
-        log_msg("not found.\n");
+        log_msg("f not found.\n");
         return -ENOENT;
     }
     else {
@@ -172,9 +178,9 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         log_msg("pos of buffer: %p\n", buf);
         log_msg("offset: %ld\n", found->getMeta().getStart() + offset);
         log_msg("size: %ld\n", s);
-        int ofs = found->getMeta().getStart() + offset;
+        size_t ofs = found->getMeta().getStart() + offset;
 
-        size_t res = readEncImage(imageFile, keyhash, (unsigned char*)buf, ofs, s);
+        size_t res = readEncImage(fd, totalsize, keyhash, (unsigned char*)buf, ofs, s);
         log_msg("readEncImage done: read %ld bytes\n", s);
         std::cout << "read " << res << " bytes from position " << ofs << std::endl;
         return res;
@@ -332,11 +338,13 @@ int handle_gen_command(int argc, char* argv[]) {
     }
     for (int i = 2; i < argc - 2; i++) { // Skip command and last two arguments (directory and image file)
         if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
-            encrypted = true; 
-        } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            encrypted = true;
+        }
+        else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             wo_gen_usage();
             return EXIT_SUCCESS;
-        } else {
+        }
+        else {
             fprintf(stderr, "Unknown or unsupported option: %s\n", argv[i]);
             wo_gen_usage();
             return EXIT_FAILURE;
@@ -349,30 +357,31 @@ int handle_gen_command(int argc, char* argv[]) {
 
     // Info
     printf("Generating image from directory '%s' to file '%s'. Encryption: %s\n",
-           directory, imageFilePath, encrypt ? "enabled" : "disabled");
+        directory, imageFilePath, encrypted ? "enabled" : "disabled");
     wo_make_image(directory, imageFilePath);
     return EXIT_SUCCESS;
 }
 
 int handle_mount_command(int argc, char* argv[]) {
+
     if (argc < 4) { // Basic argument count check
         wo_mount_usage();
         return EXIT_FAILURE;
     }
     argc--;
-    for(int j=1; j<argc; j++) {
-        argv[j] = argv[j+1];
+    for (int j = 1; j < argc; j++) {
+        argv[j] = argv[j + 1];
     }
     argv[argc] = NULL;
     for (int i = 1; i < argc - 2; i++) { // Skip command and last two arguments (image file and mount point)
         if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
-            encrypted = true; 
+            encrypted = true;
             argc--;
-            for(int j = i; j < argc; j++) {
+            for (int j = i; j < argc; j++) {
                 argv[j] = argv[j + 1];
             }
             argv[argc] = NULL;
-        } 
+        }
     }
 
     // Extract image file and mount point from the last two arguments
@@ -422,30 +431,35 @@ int handle_mount_command(int argc, char* argv[]) {
     if (encrypted) {
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
         imageFile = fopen(wo_data->rootdir, "rb");
+        fseek(imageFile, 0, SEEK_END);
+        totalsize = ftell(imageFile);
+        fseek(imageFile, 0, SEEK_SET);
+        fd = fileno(imageFile);
         try {
-            metaList = readEncMeta(imageFile, keyhash);
+            metaList = readEncMeta(fd, totalsize, imageFile, keyhash);
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             return EXIT_FAILURE;
         }
-        imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "rb");
     }
     else {
         imageFile = fopen(wo_data->rootdir, "rb");
+
         if (imageFile == nullptr) {
             perror("Error: Cannot open the image file for file system\n");
             return EXIT_FAILURE;
         }
         metaList = readAllMeta(imageFile);
     }
-    std::cout << "Found " << metaList.size() << " meta data\n";
+    // std::cout << "Found " << metaList.size() << " meta data\n";
     root_node = generateTree(metaList);
     // turn over control to fuse
     fprintf(stderr, "about to call fuse_main\n");
-    for(int i=0;i<argc;i++) {
+    for (int i = 0;i < argc;i++) {
         std::cout << argv[i] << " ";
-    } 
+    }
     std::cout << std::endl;
     fuse_stat = fuse_main(argc, argv, &wo_oper, wo_data);
     fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
@@ -454,7 +468,7 @@ int handle_mount_command(int argc, char* argv[]) {
     // dummy root 
     // Info
     printf("Mounting image file '%s' to mount point '%s'. Decryption: %s\n",
-           imageFilePath, mountPoint, decrypt ? "enabled" : "disabled");
+        imageFilePath, mountPoint, encrypted ? "enabled" : "disabled");
 
     return fuse_stat;
 }
@@ -475,9 +489,11 @@ int wo_options(int argc, char* argv[]) {
 
     else if (strcmp(argv[1], "gen") == 0) {
         return handle_gen_command(argc, argv);
-    } else if (strcmp(argv[1], "mount") == 0) {
+    }
+    else if (strcmp(argv[1], "mount") == 0) {
         return handle_mount_command(argc, argv);
-    } else {
+    }
+    else {
         fprintf(stderr, "Unknown command: %s\n", argv[1]);
         wo_usage();
         return EXIT_FAILURE;
