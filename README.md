@@ -69,7 +69,7 @@ done (for now)
 
 ### issues
 
-CI pi
+CI pipeline
 
 ## Acknowledgements
 *TBD*
