@@ -17,16 +17,15 @@ before_script:
   - apt-get install tree -y
   - apt-get install sudo -y
   - apt-get install fuse -y
-  - apt-get install strace -y
-  - apt-get install bsdmainutils -y
-# build:
-#   stage: build
-#   # instead of calling g++ directly you can also use some build toolkit like make
-#   # install the necessary build tools when needed
-#   # before_script:
-#   #   - apt update && apt -y install make autoconf
-#   script:
-#     - make
+
+build:
+  stage: build
+  # instead of calling g++ directly you can also use some build toolkit like make
+  # install the necessary build tools when needed
+  # before_script:
+  #   - apt update && apt -y install make autoconf
+  script:
+    - make
   # artifacts:
   #   paths:
   #     - mybinary
@@ -43,22 +42,11 @@ test_file_system:
     - useradd -d /builds/zy96 -g users -M -N builder
     - chown -R builder:users ..
     - |     
-      sudo -H -i -u builder sh -e -x << EOS                                                                                                                                                                                                                                            
+      sudo -H -i -u builder sh -e -x << EOS                                                                                                                                                                                                                       
+      umask 0077                                                                                                                                                                                                                                               
       export CONTINUOUS_INTEGRATION_SYSTEM="gitlab" TIMESTAMP=`date +%Y%m%d%H%M%S` DEFAULT_TARGET="debug"                                                                                                                                                      
       export PREFIX="\${HOME}/usr" SYSCONFDIR="\${HOME}/etc/conf" LOCALSTATEDIR="\${HOME}/var"                                                                                                                                                                 
-      ./fs_test.sh
-
-# test_encryption:
-#   stage: test 
-#   script:
-#     - which fusermount
-#     - useradd -d /builds/zy96 -g users -M -N builder
-#     - chown -R builder:users ..
-#     - |     
-#       sudo -H -i -u builder sh -e -x << EOS                                                                                                                                                                                                                                      
-#       export CONTINUOUS_INTEGRATION_SYSTEM="gitlab" TIMESTAMP=`date +%Y%m%d%H%M%S` DEFAULT_TARGET="debug"                                                                                                                                                      
-#       export PREFIX="\${HOME}/usr" SYSCONFDIR="\${HOME}/etc/conf" LOCALSTATEDIR="\${HOME}/var"                                                                                                                                                                 
-#       ./encrypt_test.sh
+      ./run_test.sh
 
 after_script:
   - make clean
