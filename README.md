@@ -12,7 +12,6 @@
 ├── README.md
 ├── run_test.sh
 ├── src
-│   ├── encryption.cpp
 │   ├── log.c
 │   ├── log.h
 │   ├── params.h
@@ -64,12 +63,13 @@ done (for now)
 + encrypt an image 
 + decrypt the image and build directory tree
 + read file content from encrypted image 
++ seekable random access
 
-### limitations
+### compression
 
-+ not yet integrated with fs
-+ each file read needs to decrypt from the beginning (but not to the end) (not seekable)
+### issues
 
+CI pipeline
 
 ## Acknowledgements
 *TBD*

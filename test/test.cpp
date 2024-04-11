@@ -71,8 +71,6 @@ int main() {
 
 
 
-
-
     unsigned char iv[16];
     memset(iv, 0, 16);
     size_t iv_len = 16;
@@ -113,6 +111,37 @@ int main() {
         std::cout << metas2[i].getName() << std::endl;
     }
     fclose(f);
+
+
+
+
+
+
+
+
+    std::cout << "\n===================\nTest binary crypto\n===============\n";
+    f = fopen("d2/pack", "rb");
+    int l;
+    fseek(f, 0, SEEK_END);
+    l = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    encrypt("d2/pack", "key");
+    fseek(f, 0, SEEK_SET);
+    unsigned char p[32];
+    fread(p, 1, 32, f);
+    unsigned char buffer4[32];
+    fclose(f);
+    f = fopen("d2/pack.enc", "rb");
+    SHA256((const unsigned char*)"key", 3, keyhash);
+    decrypt(f, keyhash, 0, 0, buffer4);
+    fclose(f);
+    //compare
+    for (int i = 0; i < 32; i++) {
+        if (p[i] != buffer4[i]) {
+            std::cout << "error\n";
+            break;
+        }
+    }
     return 0;
 
 }
