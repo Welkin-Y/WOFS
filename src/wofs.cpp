@@ -11,10 +11,21 @@
 #include "log.h"
 #include "utils.hpp"
 
-
 int blk_size;
 TreeNode* root_node;
 FILE* imageFile;
+std::string imgPath;
+bool encrypted = false;
+int aes_blk_size = 32;
+int chunk_size = 1024;
+int fd = -1;
+size_t totalsize = 0;
+
+
+unsigned char keyhash[SHA256_DIGEST_LENGTH];
+
+
+
 /**
  * creates a wofs image with files in path, stored in image_path
  * @param path path to directory
@@ -26,6 +37,24 @@ int wo_make_image(const char* path, const char* image_path) {
 
     fprintf(stderr, "making image from %s to %s\n", path, image_path);
     generateImage(path, image_path);
+    if (encrypted) {
+        std::string key;
+        std::cout << "Enter the key: ";
+        if (system("stty -echo") != 0) {
+            perror("Error: Cannot hide input\n");
+
+        }
+        std::cin >> key;
+        if (system("stty echo") != 0) {
+            perror("Error: Cannot show input\n");
+
+        }
+        std::cout << std::endl;
+        encrypt(image_path, key);
+        std::cout << "image encrypted as " << image_path << ".enc\n";
+        remove(image_path);
+    }
+    encrypted = false; //reset encryption flag
     return EXIT_SUCCESS;
 }
 
@@ -85,7 +114,7 @@ int wo_getattr(const char* path, struct stat* statbuf) {
     log_msg("getattr: %s\n", path);
     TreeNode* t = root_node->find(path);
     if (t == nullptr) {
-        log_msg("not found.\n");
+        log_msg("f not found.\n");
         return -ENOENT;
     }
     else {
@@ -119,8 +148,14 @@ int wo_opendir(const char* path, struct fuse_file_info* fi) {
 }
 
 int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
-    log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-        path, buf, size, offset, fi);
+    if (encrypted) {
+        log_msg("encrypted wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+            path, buf, size, offset, fi);
+    }
+    else {
+        log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+            path, buf, size, offset, fi);
+    }
     TreeNode* found = root_node->find(path);
     if (!found) {
         return -ENOENT;
@@ -133,8 +168,28 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     long s = (long)size > f_size - offset ? f_size - offset : size;
     memset(buf, 0, size);
     log_msg("   Found file: start: %ld, size: %ld\n", found->getMeta().getStart(), f_size);
+
+    if (encrypted) {
+        log_msg("reading encrypted file\n   keyhash: ");
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+            log_msg("%02x", keyhash[i]);
+        }
+        log_msg("\n");
+        log_msg("pos of buffer: %p\n", buf);
+        log_msg("offset: %ld\n", found->getMeta().getStart() + offset);
+        log_msg("size: %ld\n", s);
+        size_t ofs = found->getMeta().getStart() + offset;
+
+        size_t res = readEncImage(fd, totalsize, keyhash, (unsigned char*)buf, ofs, s);
+        log_msg("readEncImage done: read %ld bytes\n", s);
+        std::cout << "read " << res << " bytes from position " << ofs << std::endl;
+        return res;
+    }
     fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
-    return fread(buf, 1, s, imageFile);
+
+    size_t r = fread(buf, 1, s, imageFile);
+    std::cout << "read " << r << " bytes\n";
+    return r;
     // log_msg("%s\n",buf);
     // return found->getMeta().getSize();
 }
@@ -175,8 +230,6 @@ void* wo_init(struct fuse_conn_info* conn) {
 void wo_destroy(void* userdata) {
     log_msg("\nbb_destroy(userdata=0x%08x)\n", userdata);
 }
-
-
 
 int wo_access(const char* path, int mask) {
     return 0;
@@ -252,14 +305,172 @@ struct fuse_operations wo_oper = {
         .fgetattr = wo_fgetattr
 };
 
-
-int wo_usage() {
-    fprintf(stderr, "To mount: wofs [options] <image file> <mount point>\n");
-    fprintf(stderr, "To generate image: wofs -g <directory> <image file>\n");
+void wo_gen_usage() {
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "  wofs gen [options] <directory> <image file>    Generate an image\n");
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "  -h  --help            Print help\n");
-    fprintf(stderr, "  -v  --version         Print version\n");
+    fprintf(stderr, "  -h,  --help           Print this help\n");
+    fprintf(stderr, "  -e,  --encrypt        Use password for image generation\n");
+}
+
+void wo_mount_usage() {
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "  wofs mount [options] <image file> <mount point> Mount an image\n");
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -h,  --help           Print this help\n");
+    fprintf(stderr, "  -d,  --decrypt        Use password for image generation\n");
+}
+
+void wo_usage() {
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "  -h  --help            Print this help\n");
+    fprintf(stderr, "  -v  --version         Print version information\n");
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  gen                   Generate an wofs image from a directory\n");
+    fprintf(stderr, "  mount                 Mount an wofs image to a directory\n");
+    // Add more option descriptions here
+}
+
+int handle_gen_command(int argc, char* argv[]) {
+    if (argc < 4) { // Basic argument count check, might need adjustment based on actual option requirements
+        wo_gen_usage();
+        return EXIT_FAILURE;
+    }
+    for (int i = 2; i < argc - 2; i++) { // Skip command and last two arguments (directory and image file)
+        if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
+            encrypted = true;
+        }
+        else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            wo_gen_usage();
+            return EXIT_SUCCESS;
+        }
+        else {
+            fprintf(stderr, "Unknown or unsupported option: %s\n", argv[i]);
+            wo_gen_usage();
+            return EXIT_FAILURE;
+        }
+    }
+
+    // Extract directory and image file from the last two arguments
+    char* directory = argv[argc - 2];
+    char* imageFilePath = argv[argc - 1];
+
+    // Info
+    printf("Generating image from directory '%s' to file '%s'. Encryption: %s\n",
+        directory, imageFilePath, encrypted ? "enabled" : "disabled");
+    wo_make_image(directory, imageFilePath);
     return EXIT_SUCCESS;
+}
+
+int handle_mount_command(int argc, char* argv[]) {
+
+    if (argc < 4) { // Basic argument count check
+        wo_mount_usage();
+        return EXIT_FAILURE;
+    }
+    argc--;
+    for (int j = 1; j < argc; j++) {
+        argv[j] = argv[j + 1];
+    }
+    argv[argc] = NULL;
+    for (int i = 1; i < argc - 2; i++) { // Skip command and last two arguments (image file and mount point)
+        if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
+            encrypted = true;
+            argc--;
+            for (int j = i; j < argc; j++) {
+                argv[j] = argv[j + 1];
+            }
+            argv[argc] = NULL;
+        }
+    }
+
+    // Extract image file and mount point from the last two arguments
+    char* imageFilePath = argv[argc - 2];
+    char* mountPoint = argv[argc - 1];
+
+    int fuse_stat;
+    struct wo_state* wo_data = (struct wo_state*)malloc(sizeof(struct wo_state));
+    if (wo_data == NULL) {
+        perror("main malloc error");
+        abort();
+    }
+
+    wo_data->rootdir = realpath(argv[argc - 2], NULL);
+
+    argv[argc - 2] = argv[argc - 1];
+    argv[argc - 1] = NULL;
+    argc--;
+
+
+
+    wo_data->logfile = log_open();
+
+
+    struct stat* st = (struct stat*)malloc(sizeof(struct stat));
+    stat(wo_data->rootdir, st);
+    blk_size = st->st_size;
+
+    std::string key;
+    if (encrypted) {
+        std::cout << "Enter the key: ";
+        // hide input 
+        if (system("stty -echo") != 0) {
+            perror("Error: Cannot hide input\n");
+
+        }
+        std::cin >> key;
+        if (system("stty echo") != 0) {
+            perror("Error: Cannot show input\n");
+
+        }
+        std::cout << std::endl;
+        SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
+    }
+
+    std::vector<Meta> metaList;
+    if (encrypted) {
+        SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
+        imageFile = fopen(wo_data->rootdir, "rb");
+        fseek(imageFile, 0, SEEK_END);
+        totalsize = ftell(imageFile);
+        fseek(imageFile, 0, SEEK_SET);
+        fd = fileno(imageFile);
+        try {
+            metaList = readEncMeta(fd, totalsize, imageFile, keyhash);
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+        imageFile = fopen(wo_data->rootdir, "rb");
+    }
+    else {
+        imageFile = fopen(wo_data->rootdir, "rb");
+
+        if (imageFile == nullptr) {
+            perror("Error: Cannot open the image file for file system\n");
+            return EXIT_FAILURE;
+        }
+        metaList = readAllMeta(imageFile);
+    }
+    // std::cout << "Found " << metaList.size() << " meta data\n";
+    root_node = generateTree(metaList);
+    // turn over control to fuse
+    fprintf(stderr, "about to call fuse_main\n");
+    for (int i = 0;i < argc;i++) {
+        std::cout << argv[i] << " ";
+    }
+    std::cout << std::endl;
+    fuse_stat = fuse_main(argc, argv, &wo_oper, wo_data);
+    fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
+
+
+    // dummy root 
+    // Info
+    printf("Mounting image file '%s' to mount point '%s'. Decryption: %s\n",
+        imageFilePath, mountPoint, encrypted ? "enabled" : "disabled");
+
+    return fuse_stat;
 }
 
 int wo_options(int argc, char* argv[]) {
@@ -276,19 +487,19 @@ int wo_options(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // other options
-    if (strcmp(argv[1], "-g") == 0) {
-        if (argc < 4) {
-            wo_usage();
-            return EXIT_FAILURE;
-        }
-        wo_make_image(argv[2], argv[3]);
+    else if (strcmp(argv[1], "gen") == 0) {
+        return handle_gen_command(argc, argv);
+    }
+    else if (strcmp(argv[1], "mount") == 0) {
+        return handle_mount_command(argc, argv);
+    }
+    else {
+        fprintf(stderr, "Unknown command: %s\n", argv[1]);
+        wo_usage();
         return EXIT_FAILURE;
     }
-    // no options
     return EXIT_SUCCESS;
 }
-
 
 int main(int argc, char* argv[]) {
 
@@ -297,62 +508,9 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (wo_options(argc, argv) == EXIT_FAILURE) {
+    if (wo_options(argc, argv) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
 
-    int fuse_stat;
-    struct wo_state* wo_data = (struct wo_state*)malloc(sizeof(struct wo_state));
-    if (wo_data == NULL) {
-        perror("main malloc error");
-        abort();
-    }
-
-    wo_data->rootdir = realpath(argv[argc - 2], NULL);
-    argv[argc - 2] = argv[argc - 1];
-    argv[argc - 1] = NULL;
-    argc--;
-
-    wo_data->logfile = log_open();
-
-
-    struct stat* st = (struct stat*)malloc(sizeof(struct stat));
-    stat(wo_data->rootdir, st);
-    blk_size = st->st_size;
-
-    // Meta root = Meta("", -1, 3200, 0777, 0, 0, true);
-    // fprintf(stderr, "root: %s\n", root.getName().c_str());
-    // root_node = new TreeNode(root);
-    // Meta f1 = Meta("file1", -1, 400, 0777, 0, 0, false);
-    // TreeNode* f1_node = new TreeNode(f1);
-    // root_node->setChild(f1_node);
-
-    // Meta f2 = Meta("file2", -1, 400, 0777, 0, 0, false);
-    // TreeNode* f2_node = new TreeNode(f2);
-    // f1_node->setSibling(f2_node);
-
-    // Meta f3 = Meta("dir1", -1, 720, 0777, 0, 0, true);
-    // TreeNode* f3_node = new TreeNode(f3);
-    // f2_node->setSibling(f3_node);
-
-    // Meta f4 = Meta("dir1/file3", -1, 400, 0777, 0, 0, false);
-    // TreeNode* f4_node = new TreeNode(f4);
-    // f3_node->setChild(f4_node);
-    imageFile = fopen(wo_data->rootdir, "r");
-    if (imageFile == nullptr) {
-        perror("Error: Cannot open the image file for file system\n");
-        return EXIT_FAILURE;
-    }
-    std::vector<Meta> metaList = readAllMeta(imageFile);
-    std::cout << "Found " << metaList.size() << " meta data\n";
-    root_node = generateTree(metaList);
-    // turn over control to fuse
-    fprintf(stderr, "about to call fuse_main\n");
-    fuse_stat = fuse_main(argc, argv, &wo_oper, wo_data);
-    fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
-
-
-    // dummy root 
-
-    return fuse_stat;
+    return EXIT_SUCCESS;
 }

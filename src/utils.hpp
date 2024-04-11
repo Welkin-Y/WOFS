@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -15,25 +16,31 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
+
 #include <iostream>
 #include <vector>
 #include <string>
 
+
 class Meta {
 
     std::string name; // full path
-    long start;
-    long size;
+    size_t start;
+    size_t size;
     unsigned int permission;
     unsigned int owner;
     unsigned int group;
     bool isDir;
     time_t lastModified;
 public:
-    Meta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified);
+    Meta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified);
     std::string getName();
-    long getStart();
-    long getSize();
+    size_t getStart();
+    size_t getSize();
     unsigned int getPermission();
     unsigned int getOwner();
     unsigned int getGroup();
@@ -95,13 +102,26 @@ Meta parseImageMeta(char* buffer, int metaLen);
 Meta readMeta(FILE* f);
 
 std::vector<Meta> readAllMeta(FILE* f);
+std::vector<Meta> readAllMeta(char* buffer, int size);
 
 TreeNode* generateTree(std::vector<Meta> metaList);
 
 // For generate Image
-int writeImageMeta(std::string name, long start, long size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file);
+int writeImageMeta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, time_t lastModified, FILE* file);
 
 int writeAllMeta(std::vector<Meta> metas, FILE* file);
 
 int generateImage(const std::string& directory, const std::string& image);
 
+// int ecb_encrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
+// int ecb_decrypt(unsigned char* in, int in_len, unsigned char* out, unsigned char* key);
+
+int encrypt(const std::string& path, const std::string& key);
+int decrypt(int fd, size_t totalsize, unsigned char* keyhash, size_t st_blk, size_t ed_blk, unsigned char* buffer);
+
+// int getImageSize(const std::string& path);
+
+size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t begin, size_t len);
+std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
+
+int verify(FILE* f, unsigned char* keyhash);

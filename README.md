@@ -31,13 +31,15 @@
 + `./build/wofs`
 
 ## Run test
-
-+ `sh run_test.sh`
++ test file system
++ `sh fs_test.sh`
++ test encryption
++ `sh encrypt_test.sh`
 
 ## How to use
 
-+ To mount: wofs [options] <image file> <mount point>
-+ To generate image: wofs -g <directory> <image file>
++ To mount: wofs mount [options] \<image file> \<mount point>
++ To generate image: wofs gen [options] \<directory> \<image file>
 done (for now)
 
 ## progress: 
@@ -55,6 +57,18 @@ done (for now)
 
 ## TODO:
 + root directory's permission and mtime still set arbitrarily
+
+### encryption
+
++ encrypt an image 
++ decrypt the image and build directory tree
++ read file content from encrypted image 
+
+### limitations
+
++ not yet integrated with fs
++ each file read needs to decrypt from the beginning (but not to the end) (not seekable)
+
 
 ## Acknowledgements
 *TBD*
