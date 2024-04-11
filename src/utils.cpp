@@ -214,8 +214,6 @@ std::vector<Meta> readAllMeta(FILE* f) {
     return metas;
 }
 
-
-
 TreeNode* generateTree(std::vector<Meta> metaList) {
     std::map<std::string, TreeNode*> record;
     TreeNode* root = new TreeNode(Meta("", -1, 0, 0700, 0, 0, true, time(NULL)));
