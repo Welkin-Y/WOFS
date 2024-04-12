@@ -25,6 +25,10 @@
 #include <vector>
 #include <string>
 
+#include <zlib.h>
+#include <map>
+#include <limits>
+
 
 class Meta {
 
@@ -125,3 +129,9 @@ size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned c
 std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
 
 int verify(FILE* f, unsigned char* keyhash);
+
+int compress(const unsigned char* src, size_t src_len, unsigned char* dest, size_t* dest_len);
+int decompress(const unsigned char* src, size_t src_len, unsigned char* dest, size_t* dest_len);
+
+int generateCompressedImage(const std::string& directory, const std::string& image);
+std::vector<Meta> readEncComMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);

@@ -1,10 +1,11 @@
 #include "utils.hpp"
-#include <map>
-#include <limits>
+
 
 size_t iv_len = 32;
 size_t aes_block_size = 32;
 size_t sha_len = 32;
+
+int CHUNK_SIZE = 1024;
 
 Meta::Meta(
     std::string name,
@@ -276,14 +277,16 @@ int writeImageMeta(std::string name, size_t start, size_t size, unsigned int per
  * @brief record current file length, write all metas to image, then write the position of beginning of meta
 */
 int writeAllMeta(std::vector<Meta> metas, FILE* file) {
-    // std::cout << "writing meta to image\n";
+    std::cout << "writing meta to image\n";
     fseek(file, 0, SEEK_END);
     int p = ftell(file);
+
+
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
         writeImageMeta(it->getName(), it->getStart(), it->getSize(), it->getPermission(), it->getOwner(), it->getGroup(), it->isDirectory(), it->getLastModified(), file);
     }
-    // std::cout << "p rests at " << ftell(file) << std::endl;
-    // std::cout << "p is " << p << std::endl;
+    std::cout << "p rests at " << ftell(file) << std::endl;
+    std::cout << "p is " << p << std::endl;
     fwrite(&p, sizeof(p), 1, file);
 
     return 0;
@@ -294,8 +297,9 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
  * @brief helper function of generateImage
  * recursively write file into image and record meta
 */
-std::vector<Meta> genHelper(const std::string& directory, const std::string& relaDir, FILE* f, size_t* currPosition) {
+std::pair<std::vector<Meta>, std::vector<size_t> > genHelper(const std::string& directory, const std::string& relaDir, FILE* f, size_t* currPosition, bool com) {
     std::vector<Meta> files;
+    std::vector<size_t> positions;
     DIR* dir;
     struct dirent* ent;
     struct stat st;
@@ -309,14 +313,32 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                 // file 
                 toWrite = fopen((directory + "/" + ent->d_name).c_str(), "rb");
                 // write toWrite to image
-                char* buffer = new char[st.st_size];
-                size_t len = fread(buffer, 1, st.st_size, toWrite);
-                if (len < 0) {
-                    perror("Error: failed to read file\n");
-                    return files;
+                if (!com) {
+                    char* buffer = new char[st.st_size];
+                    size_t len = fread(buffer, 1, st.st_size, toWrite);
+                    if (len < 0) {
+                        perror("Error: failed to read file\n");
+                        return std::make_pair(files, positions);
+                    }
+                    fwrite(buffer, 1, st.st_size, f);
+                    delete buffer;
+
                 }
-                fwrite(buffer, 1, st.st_size, f);
-                delete buffer;
+                else {
+                    unsigned char buffer[CHUNK_SIZE];
+
+                    size_t read_len;
+                    // read CHUNK_SIZE bytes at a time, compress, and write to f, record this compressed size
+                    while (read_len = fread(buffer, 1, CHUNK_SIZE, toWrite)) {
+                        size_t out_len;
+                        unsigned char out[CHUNK_SIZE];
+                        memset(out, 0, CHUNK_SIZE);
+                        compress(buffer, read_len, out, &out_len);
+                        fwrite(out, 1, out_len, f);
+                        positions.push_back(out_len);
+                    }
+
+                }
                 fclose(toWrite);
                 int p = st.st_mode;
                 p &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
@@ -333,10 +355,13 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
                     Meta m = Meta((relaDir + "/" + ent->d_name), *currPosition, st.st_size, p, st.st_uid, st.st_gid, true, st.st_mtime);
                     files.push_back(m);
 
-                    std::vector<Meta> sub =
-                        genHelper(directory + "/" + ent->d_name, relaDir + "/" + ent->d_name, f, currPosition);
-                    for (size_t i = 0; i < sub.size(); i++) {
-                        files.push_back(sub[i]);
+                    std::pair<std::vector<Meta>, std::vector<size_t> > sub =
+                        genHelper(directory + "/" + ent->d_name, relaDir + "/" + ent->d_name, f, currPosition, com);
+                    for (size_t i = 0; i < sub.first.size(); i++) {
+                        files.push_back(sub.first[i]);
+                    }
+                    for (size_t i = 0; i < sub.second.size(); i++) {
+                        positions.push_back(sub.second[i]);
                     }
                 }
             }
@@ -346,8 +371,7 @@ std::vector<Meta> genHelper(const std::string& directory, const std::string& rel
     else {
         std::cout << "Error opening directory\n";
     }
-
-    return files;
+    return std::make_pair(files, positions);
 }
 
 /**
@@ -370,7 +394,7 @@ int generateImage(const std::string& directory, const std::string& image) {
     size_t currPosition = 0;
     FILE* f = fopen(image.c_str(), "wb");
     if (f != nullptr) {
-        files = genHelper(directory, "", f, &currPosition);
+        files = genHelper(directory, "", f, &currPosition, false).first;
         writeAllMeta(files, f);
         fclose(f);
         return EXIT_SUCCESS;
@@ -691,6 +715,8 @@ size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned c
     return len;
 }
 
+
+
 int getImageSize(int fd, size_t totalsize) {
 
     int p;
@@ -700,6 +726,22 @@ int getImageSize(int fd, size_t totalsize) {
         return -1;
     }
     return p;
+}
+
+std::vector<Meta> readAllMeta(char* buffer, int size) {
+    std::vector<Meta> metas;
+    size_t i = 0;
+    while (i < size - sizeof(int)) {
+        int metaLen;
+        memcpy(&metaLen, buffer + i, sizeof(int));
+        Meta m = parseImageMeta(buffer + i, metaLen);
+        metas.push_back(m);
+        i += metaLen;
+
+    }
+
+    std::cout << "returning with " << metas.size() << " metas\n";
+    return metas;
 }
 
 /**
@@ -721,8 +763,8 @@ std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* 
     int p;
     memcpy(&p, buffer, sizeof(int));
     if (p < 0 || p > imgsize) {
-        std::cout << "Error: invalid position p\n";
-        throw std::runtime_error("invalid position p");
+        std::cout << "Error: invalid position p " << p << std::endl;
+        throw std::runtime_error("invalid position p \n" + p);
     }
     unsigned char metaBuffer[imgsize - p];
     if (!readEncImage(fd, totalsize, keyhash, metaBuffer, p, imgsize - p)) {
@@ -734,18 +776,180 @@ std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* 
     return metas;
 }
 
+/**
+ * @brief read all meta from an encrypted and compressed image. note that with compression,
+ * there is an additional block after meta and pointer to start of meta, including a vector of size_t and a pointer to start of vector
+*/
+std::vector<Meta> readEncComMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash) {
+    if (verify(f, keyhash) != 0) {
+        fprintf(stderr, "Error: HMAC verification failed\n");
+        throw std::runtime_error("failed HMAC verification");
+    }
+    // std::cout << "HMAC verification passed.\n";
+    int imgsize = getImageSize(fd, totalsize);
 
 
-std::vector<Meta> readAllMeta(char* buffer, int size) {
-    std::vector<Meta> metas;
-    size_t i = 0;
-    while (i < size - sizeof(int)) {
-        int metaLen;
-        memcpy(&metaLen, buffer + i, sizeof(int));
-        Meta m = parseImageMeta(buffer + i, metaLen);
-        metas.push_back(m);
-        i += metaLen;
+    unsigned char buffer[sizeof(int)];
+
+    if (!readEncImage(fd, totalsize, keyhash, buffer, imgsize - sizeof(int), sizeof(int))) {
+        fprintf(stderr, "Error: failed to read image when doing imgsize read\n");
+        throw std::runtime_error("failed to read image");
+    }
+    int p;
+    memcpy(&p, buffer, sizeof(int));
+    // this p holds the position of the start of the vector of sizes
+    if (p < 0 || p > imgsize) {
+        std::cout << "Error: invalid position p" << p << std::endl;
+        throw std::runtime_error("invalid position p" + p);
+    }
+
+    std::cout << "the position of the start of vector of sizes is " << p << std::endl;
+    if (!readEncImage(fd, totalsize, keyhash, buffer, p - sizeof(int), sizeof(int))) {
+        fprintf(stderr, "Error: failed to read image when doing meta read\n");
+        throw std::runtime_error("failed to read image");
+    }
+    int p2;
+    memcpy(&p2, buffer, sizeof(int));
+    std::cout << "now p2 holds the position of the start of meta: " << p2 << std::endl;
+    // now this p holds the position of the start of meta
+
+
+    // the meta area's size is p - p2 - sizeof(int)
+    unsigned char metaBuffer[p - p2 - sizeof(int)];
+    if (!readEncImage(fd, totalsize, keyhash, metaBuffer, p2, p - p2 - sizeof(int))) {
+        fprintf(stderr, "Error: failed to read image when doing meta read\n");
+        throw std::runtime_error("failed to read image");
 
     }
+    std::vector<Meta> metas = readAllMeta((char*)metaBuffer, p - p2 - sizeof(int));
     return metas;
+
+
+}
+
+
+
+
+
+
+int compress(const unsigned char* src, size_t src_len, unsigned char* dest, size_t* dest_len) {
+    z_stream strm;
+    int ret;
+    size_t have;
+    unsigned char out[CHUNK_SIZE];
+
+    memset(&strm, 0, sizeof(strm));
+    if (deflateInit(&strm, Z_BEST_COMPRESSION) != Z_OK) {
+        return -1;
+    }
+
+    strm.next_in = (Bytef*)src;
+    strm.avail_in = (uInt)src_len;
+    *dest_len = 0;
+    do {
+        strm.avail_out = CHUNK_SIZE;
+        strm.next_out = out;
+        ret = deflate(&strm, Z_FINISH);
+        have = CHUNK_SIZE - strm.avail_out;
+        memcpy(dest + *dest_len, out, have);
+        *dest_len += have;
+    } while (ret == Z_OK);
+
+    deflateEnd(&strm);
+    return ret == Z_STREAM_END ? 0 : -1;
+}
+int decompress(const unsigned char* src, size_t src_len, unsigned char* dest, size_t* dest_len) {
+    z_stream strm;
+    int ret;
+    size_t have;
+    unsigned char out[CHUNK_SIZE];
+
+    memset(&strm, 0, sizeof(strm));
+    if (inflateInit(&strm) != Z_OK) {
+        return -1;
+    }
+
+    strm.next_in = (Bytef*)src;
+    strm.avail_in = (uInt)src_len;
+    *dest_len = 0;
+    do {
+        strm.avail_out = CHUNK_SIZE;
+        strm.next_out = out;
+        ret = inflate(&strm, Z_NO_FLUSH);
+        switch (ret) {
+        case Z_NEED_DICT:
+        case Z_DATA_ERROR:
+        case Z_MEM_ERROR:
+            inflateEnd(&strm);
+            return -1;
+        }
+        have = CHUNK_SIZE - strm.avail_out;
+
+        memcpy(dest + *dest_len, out, have);
+        *dest_len += have;
+    } while (ret != Z_STREAM_END);
+
+    inflateEnd(&strm);
+    return 0;
+}
+
+int write_sizes(const std::vector<size_t>& sizes, FILE* f) {
+    int p = ftell(f);
+
+    std::cout << "writing sizes to image\n";
+    std::cout << "without size vector the position is " << p << std::endl;
+
+    for (size_t i = 0; i < sizes.size(); i++) {
+        fwrite(&sizes[i], sizeof(size_t), 1, f);
+        // std::cout << "writing size " << sizes[i] << std::endl;
+    }
+
+
+
+    fwrite(&p, sizeof(int), 1, f);
+    p = ftell(f);
+    std::cout << "with size vector the position is now " << p << std::endl;
+    return 0;
+}
+
+
+/**
+ * @brief same as generate image, but with an additional compress step
+*/
+int generateCompressedImage(const std::string& directory, const std::string& image) {
+
+    // check if directory is a directory
+    struct stat st;
+    if (stat(directory.c_str(), &st) != 0) {
+        perror("Error: Cannot open the directory\n");
+        return EXIT_FAILURE;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+        fprintf(stderr, "Error: %s is not a directory\n", directory.c_str());
+        return EXIT_FAILURE;
+    }
+
+    std::vector<Meta> files;
+    std::vector<size_t> compressedSizes;
+    size_t currPosition = 0;
+    FILE* f = fopen(image.c_str(), "wb");
+    if (f != nullptr) {
+        std::pair<std::vector<Meta>, std::vector<size_t> > pair = genHelper(directory, "", f, &currPosition, true);
+        files = pair.first;
+        compressedSizes = pair.second;
+
+
+        writeAllMeta(files, f);
+        write_sizes(compressedSizes, f);
+        fclose(f);
+
+        // std::cout << "compressed sizes: " << std::endl;
+        // for (size_t i = 0; i < compressedSizes.size(); i++) {
+        //     std::cout << compressedSizes[i] << std::endl;
+        // }
+        return EXIT_SUCCESS;
+    }
+
+    perror("Error: Cannot open the image file\n");
+    return EXIT_FAILURE;
 }
