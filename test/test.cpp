@@ -1,4 +1,4 @@
-#include "params.h"
+#include "../src/params.h"
 
 
 #ifdef HAVE_SYS_XATTR_H
@@ -8,7 +8,7 @@
 #define UNSUPPORTED -1
 #define VERSION "0.1: nothing to see"
 
-#include "utils.hpp"
+#include "../src/utils.hpp"
 
 
 /**
@@ -50,6 +50,9 @@ int main() {
     FILE* f = fopen("testImage", "r");
     std::cout << "reading from image testImage" << std::endl;
     std::vector<Meta> metas = readAllMeta(f);
+
+
+    std::cout << "metas read.\n";
     for (std::vector<Meta>::iterator it = metas.begin(); it != metas.end(); it++) {
         fprintf(stderr, "name: %s\n", it->getName().c_str());
         fprintf(stderr, "size: %ld\n", it->getSize());
@@ -196,7 +199,7 @@ int main() {
     std::cout << "\n===================\nTest genHelper w compress\n===============\n";
 
 
-    generateImage("d1", "testImage");
+    generateImage("d0", "testImage");
     f = fopen("testImage", "r");
     encrypt("testImage", "key");
     fclose(f);
@@ -204,13 +207,13 @@ int main() {
     fseek(f, 0, SEEK_END);
     size_t s = ftell(f);
     std::vector<Meta> metas3 = readEncMeta(fileno(f), s, f, keyhash);
-    for (int i = 0; i < metas3.size(); i++) {
-        std::cout << metas3[i].getName() << std::endl;
-    }
+    // for (int i = 0; i < metas3.size(); i++) {
+    //     std::cout << metas3[i].getName() << std::endl;
+    // }
     fclose(f);
 
 
-    generateCompressedImage("d1", "testImage");
+    generateCompressedImage("d0", "testImage");
     f = fopen("testImage", "r");
 
     encrypt("testImage", "key");
@@ -219,14 +222,28 @@ int main() {
     fseek(f, 0, SEEK_END);
     size_t size = ftell(f);
     std::vector<Meta> metas4 = readEncComMeta(fileno(f), size, f, keyhash);
-    fclose(f);
+
 
     std::cout << "compressed\n";
 
-    for (int i = 0; i < metas4.size(); i++) {
-        std::cout << metas4[i].getName() << std::endl;
-    }
+    // for (int i = 0; i < metas4.size(); i++) {
+    //     std::cout << metas4[i].getName() << std::endl;
+    // }
     std::cout << "done testing\n" << std::endl;
+
+
+    std::pair<std::vector<Meta>, std::vector<size_t> > p = parseEncCompMeta(fileno(f), size, f, keyhash);
+
+    std::cout << "compressed meta and sizes\n";
+    // for (int i = 0; i < p.first.size(); i++) {
+    //     std::cout << p.first[i].getName() << std::endl;
+    // }
+    // for (int i = 0; i < p.second.size(); i++) {
+    //     std::cout << p.second[i] << std::endl;
+    // }
+
+    fclose(f);
+
     return 0;
 
 }

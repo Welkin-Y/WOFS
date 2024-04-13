@@ -13,6 +13,7 @@
 
 int blk_size;
 TreeNode* root_node;
+std::vector<size_t> sizes;
 FILE* imageFile;
 std::string imgPath;
 bool encrypted = false;
@@ -36,8 +37,9 @@ int wo_make_image(const char* path, const char* image_path) {
     // TODO: write an acutal implementation
 
     fprintf(stderr, "making image from %s to %s\n", path, image_path);
-    generateImage(path, image_path);
     if (encrypted) {
+        generateCompressedImage(path, image_path);
+
         std::string key;
         std::cout << "Enter the key: ";
         if (system("stty -echo") != 0) {
@@ -53,7 +55,9 @@ int wo_make_image(const char* path, const char* image_path) {
         encrypt(image_path, key);
         std::cout << "image encrypted as " << image_path << ".enc\n";
         remove(image_path);
+        return EXIT_SUCCESS;
     }
+    generateImage(path, image_path);
     encrypted = false; //reset encryption flag
     return EXIT_SUCCESS;
 }
@@ -151,6 +155,8 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     if (encrypted) {
         log_msg("encrypted wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
             path, buf, size, offset, fi);
+
+
     }
     else {
         log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
@@ -169,7 +175,25 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     memset(buf, 0, size);
     log_msg("   Found file: start: %ld, size: %ld\n", found->getMeta().getStart(), f_size);
 
+
+
+
     if (encrypted) {
+        // to read encrypted and compressed image:
+        // calculate which compression blocks to read
+        // ucb_start = begin / CHUNK_SIZE
+        // ucb_end = (begin+len) / CHUNK_SIZE
+        // find the corresponding offsets of compressed blocks
+        // cb_start_pos = sizes[ucb_start - 1] if ucb_start > 0 else 0
+        // for each size[i] in sizes[ucb_start, ucb_end], call readEncImage on curr_pos, size[i].
+        // update decompressed buffer by calling decompress on each block
+        // after getting decompressed blocks, crop the buffer we want
+
+        // notice that sizes have changed from each block's size to its end position. 
+        // this means that each block's size is sizes[i] - sizes[i-1] if i > 0, and sizes[i] if i == 0
+        // but we don't need to add from block 0 to ucb_start. 
+        // changes are made accordingly
+
         log_msg("reading encrypted file\n   keyhash: ");
         for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
             log_msg("%02x", keyhash[i]);
@@ -178,12 +202,8 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         log_msg("pos of buffer: %p\n", buf);
         log_msg("offset: %ld\n", found->getMeta().getStart() + offset);
         log_msg("size: %ld\n", s);
-        size_t ofs = found->getMeta().getStart() + offset;
 
-        size_t res = readEncImage(fd, totalsize, keyhash, (unsigned char*)buf, ofs, s);
-        log_msg("readEncImage done: read %ld bytes\n", s);
-        std::cout << "read " << res << " bytes from position " << ofs << std::endl;
-        return res;
+        return readEncComImage(fd, totalsize, keyhash, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
     }
     fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
 
@@ -436,7 +456,18 @@ int handle_mount_command(int argc, char* argv[]) {
         fseek(imageFile, 0, SEEK_SET);
         fd = fileno(imageFile);
         try {
-            metaList = readEncMeta(fd, totalsize, imageFile, keyhash);
+            std::pair<std::vector<Meta>, std::vector<size_t> > pair = parseEncCompMeta(fd, totalsize, imageFile, keyhash);
+            metaList = pair.first;
+            sizes = pair.second;
+            for (int i = 0; i < metaList.size(); i++) {
+                std::cout << "meta no. " << i << ": \n";
+                std::cout << metaList[i].getName() << std::endl;
+            }
+            std::cout << "found " << sizes.size() << " compressed blocks\n";
+            for (int i = 0; i < sizes.size(); i++) {
+
+                std::cout << sizes[i] << std::endl;
+            }
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
