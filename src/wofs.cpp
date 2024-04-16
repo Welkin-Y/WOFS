@@ -164,35 +164,20 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     }
     TreeNode* found = root_node->find(path);
     if (!found) {
+        std::cout << "file not found\n";
         return -ENOENT;
     }
     long f_size = found->getMeta().getSize();
     if (offset > f_size) {
+        std::cout << "offset > f_size\n";
         return 0;
     }
 
     long s = (long)size > f_size - offset ? f_size - offset : size;
-    memset(buf, 0, size);
+    memset(buf, 0, s);
     log_msg("   Found file: start: %ld, size: %ld\n", found->getMeta().getStart(), f_size);
 
-
-
-
     if (encrypted) {
-        // to read encrypted and compressed image:
-        // calculate which compression blocks to read
-        // ucb_start = begin / CHUNK_SIZE
-        // ucb_end = (begin+len) / CHUNK_SIZE
-        // find the corresponding offsets of compressed blocks
-        // cb_start_pos = sizes[ucb_start - 1] if ucb_start > 0 else 0
-        // for each size[i] in sizes[ucb_start, ucb_end], call readEncImage on curr_pos, size[i].
-        // update decompressed buffer by calling decompress on each block
-        // after getting decompressed blocks, crop the buffer we want
-
-        // notice that sizes have changed from each block's size to its end position. 
-        // this means that each block's size is sizes[i] - sizes[i-1] if i > 0, and sizes[i] if i == 0
-        // but we don't need to add from block 0 to ucb_start. 
-        // changes are made accordingly
 
         log_msg("reading encrypted file\n   keyhash: ");
         for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
@@ -203,7 +188,13 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         log_msg("offset: %ld\n", found->getMeta().getStart() + offset);
         log_msg("size: %ld\n", s);
 
-        return readEncComImage(fd, totalsize, keyhash, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
+        unsigned char* temp = (unsigned char*)malloc(s);
+        int ret = readEncComImage(fd, totalsize, keyhash, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
+        if (ret != 0) {
+            std::cout << "error reading compressed image\n";
+            return ret;
+        }
+        return s;
     }
     fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
 
@@ -418,8 +409,8 @@ int handle_mount_command(int argc, char* argv[]) {
     wo_data->rootdir = realpath(argv[argc - 2], NULL);
 
     argv[argc - 2] = argv[argc - 1];
-    argv[argc - 1] = NULL;
-    argc--;
+    argv[argc - 1] = "-f";
+    // argc--;
 
 
 

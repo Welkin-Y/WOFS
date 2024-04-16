@@ -794,7 +794,7 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
     // decompressed_buffer now holds the decompressed blocks that our start and len covers
     x = offset % CHUNK_SIZE;
     memcpy((void*)buffer, (const void*)(decompressed_buffer + x), s);
-
+    std::cout << "returning with " << s << " bytes\n";
     return s;
 }
 
@@ -1024,6 +1024,7 @@ int decompress(const unsigned char* src, size_t src_len, unsigned char* dest, si
     strm.next_in = (Bytef*)src;
     strm.avail_in = (uInt)src_len;
     *dest_len = 0;
+    std::cout << "src is " << src_len << " bytes\n";
     do {
         strm.avail_out = CHUNK_SIZE;
         strm.next_out = out;
@@ -1033,6 +1034,7 @@ int decompress(const unsigned char* src, size_t src_len, unsigned char* dest, si
         case Z_DATA_ERROR:
         case Z_MEM_ERROR:
             inflateEnd(&strm);
+            std::cout << "inflate failed with " << ret << std::endl;
             return ret;
         }
         have = CHUNK_SIZE - strm.avail_out;
