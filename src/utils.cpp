@@ -15,7 +15,7 @@ Meta::Meta(
     unsigned int owner,
     unsigned int group,
     bool isDir,
-    int num_blocks,
+    size_t num_blocks,
     time_t lastModified) : name(name), start(start), size(size), permission(permission), owner(owner), group(group), isDir(isDir), num_blocks(num_blocks), lastModified(lastModified) {}
 
 // Getters 
@@ -26,7 +26,7 @@ unsigned int Meta::getPermission() { return this->permission; }
 unsigned int Meta::getOwner() { return this->owner; }
 unsigned int Meta::getGroup() { return this->group; }
 bool Meta::isDirectory() { return this->isDir; }
-int Meta::getNumBlocks() { return this->num_blocks; }
+size_t Meta::getNumBlocks() { return this->num_blocks; }
 time_t Meta::getLastModified() { return this->lastModified; }
 
 TreeNode::TreeNode(Meta m) : m(m), child(nullptr), sibling(nullptr) {}
@@ -167,7 +167,7 @@ Meta parseImageMeta(char* buffer, int metaLen) {
     p += sizeof(group);
     bool isDir = *(bool*)p;
     p += sizeof(isDir);
-    int num_blocks = *(int*)p;
+    size_t num_blocks = *(int*)p;
     p += sizeof(num_blocks);
     time_t lastModified = *(time_t*)p;
     return Meta(name, start, size, permission, owner, group, isDir, num_blocks, lastModified);
@@ -247,7 +247,7 @@ TreeNode* generateTree(std::vector<Meta> metaList) {
 
 
 
-int writeImageMeta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, int num_blocks, time_t lastModified, FILE* file) {
+int writeImageMeta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, size_t num_blocks, time_t lastModified, FILE* file) {
     size_t nameSize = name.size();
     size_t metaSize = 2 * sizeof(size_t) + nameSize + sizeof(start) + sizeof(size) + sizeof(permission) + sizeof(owner) + sizeof(group) + sizeof(isDir) + sizeof(num_blocks) + sizeof(time_t);
     char* buffer = new char[metaSize];
@@ -303,7 +303,7 @@ int writeAllMeta(std::vector<Meta> metas, FILE* file) {
  * @brief helper function of generateImage
  * recursively write file into image and record meta
 */
-std::pair<std::vector<Meta>, std::vector<size_t> > genHelper(const std::string& directory, const std::string& relaDir, FILE* f, size_t* currPosition, bool com) {
+std::pair<std::vector<Meta>, std::vector<size_t> > genHelper(const std::string& directory, const std::string& relaDir, FILE* f, size_t* currPosition, bool com, size_t* num_blocks) {
     std::vector<Meta> files;
     std::vector<size_t> positions;
     DIR* dir;
@@ -348,15 +348,15 @@ std::pair<std::vector<Meta>, std::vector<size_t> > genHelper(const std::string& 
                         positions.push_back(out_len);
                         count++;
                     }
-                    std::cout << ent->d_name << " has " << count << " blocks, representing " << st.st_size << " bytes\n";
-                    std::cout << "the first position pointer is at " << positions.size() - count << std::endl;
+
 
                 }
                 fclose(toWrite);
                 int p = st.st_mode;
                 p &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
                 std::cout << "the file begins at " << *currPosition << std::endl;
-                Meta m = Meta((relaDir + "/" + ent->d_name), *currPosition, st.st_size, p, st.st_uid, st.st_gid, false, positions.size() - count, st.st_mtime);
+                Meta m = Meta((relaDir + "/" + ent->d_name), *currPosition, st.st_size, p, st.st_uid, st.st_gid, false, *num_blocks, st.st_mtime);
+                *num_blocks += count;
                 files.push_back(m);
 
                 *currPosition += st.st_size;
@@ -372,7 +372,7 @@ std::pair<std::vector<Meta>, std::vector<size_t> > genHelper(const std::string& 
                     files.push_back(m);
 
                     std::pair<std::vector<Meta>, std::vector<size_t> > sub =
-                        genHelper(directory + "/" + ent->d_name, relaDir + "/" + ent->d_name, f, currPosition, com);
+                        genHelper(directory + "/" + ent->d_name, relaDir + "/" + ent->d_name, f, currPosition, com, num_blocks);
                     for (size_t i = 0; i < sub.first.size(); i++) {
                         files.push_back(sub.first[i]);
                     }
@@ -411,7 +411,8 @@ int generateImage(const std::string& directory, const std::string& image) {
     size_t currPosition = 0;
     FILE* f = fopen(image.c_str(), "wb");
     if (f != nullptr) {
-        files = genHelper(directory, "", f, &currPosition, false).first;
+        size_t num_blocks = 0;
+        files = genHelper(directory, "", f, &currPosition, false, &num_blocks).first;
         writeAllMeta(files, f);
         fclose(f);
         return EXIT_SUCCESS;
@@ -751,7 +752,8 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
     // log_msg("ucb_start: %ld\n", ucb_start);
     size_t ucb_end = (offset + s) / CHUNK_SIZE + bef;
     // log_msg("ucb_end: %ld\n", ucb_end);
-    unsigned char decompressed_buffer[(ucb_end - ucb_start + 1) * CHUNK_SIZE];
+    size_t x = (ucb_end - ucb_start + 2) * CHUNK_SIZE;
+    unsigned char decompressed_buffer[x];
 
     size_t cb_start_pos = 0;
     if (ucb_start > 0) {
@@ -762,10 +764,9 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
     size_t curr_size = 0;
     size_t curr_pos = cb_start_pos;
 
-    // log_msg("the corresponding compression blocks are from %ld to %ld\n", ucb_start, ucb_end);
     for (size_t i = ucb_start; i <= ucb_end; i++) {
-
-        // read encrypted block
+        //  std::cout << "reading block " << i << std::endl;
+          // read encrypted block
         curr_size = sizes[i] - curr_pos;
         // log_msg("reading encrypted compression block %ld\n", i);
         // log_msg("corresponding size is %ld\n", curr_size);
@@ -782,7 +783,8 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
         // log_msg("\n");
         // log_msg("readEncImage done: read %ld bytes\n", r);
         // decompressed_len should always be chunk_size
-        int r2 = decompress(compressed_block, sizes[i], decompressed_buffer + (i - ucb_start) * CHUNK_SIZE, &decompressed_len);
+        int v = (i - ucb_start) * CHUNK_SIZE;
+        int r2 = decompress(compressed_block, sizes[i], decompressed_buffer + v, &decompressed_len);
         // log_msg("decompressed len: %ld\n", decompressed_len);
 
 
@@ -790,7 +792,9 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
     }
 
     // decompressed_buffer now holds the decompressed blocks that our start and len covers
-    memcpy(buffer, decompressed_buffer + offset % CHUNK_SIZE, s);
+    x = offset % CHUNK_SIZE;
+    memcpy((void*)buffer, (const void*)(decompressed_buffer + x), s);
+
     return s;
 }
 
@@ -974,7 +978,6 @@ std::pair<std::vector<Meta>, std::vector<size_t> > parseEncCompMeta(int fd, size
 
 
 
-
 int compress(const unsigned char* src, size_t src_len, unsigned char* dest, size_t* dest_len) {
     z_stream strm;
     int ret;
@@ -994,7 +997,7 @@ int compress(const unsigned char* src, size_t src_len, unsigned char* dest, size
         strm.next_out = out;
         ret = deflate(&strm, Z_FINISH);
         have = CHUNK_SIZE - strm.avail_out;
-        memcpy(dest + *dest_len, out, have);
+        memcpy((void*)(dest + *dest_len), (const void*)out, have);
         *dest_len += have;
     } while (ret == Z_OK);
 
@@ -1033,8 +1036,7 @@ int decompress(const unsigned char* src, size_t src_len, unsigned char* dest, si
             return ret;
         }
         have = CHUNK_SIZE - strm.avail_out;
-
-        memcpy(dest + *dest_len, out, have);
+        memcpy((void*)(dest + *dest_len), (const void*)out, have);
         *dest_len += have;
     } while (ret != Z_STREAM_END);
 
@@ -1090,7 +1092,8 @@ int generateCompressedImage(const std::string& directory, const std::string& ima
     size_t currPosition = 0;
     FILE* f = fopen(image.c_str(), "wb");
     if (f != nullptr) {
-        std::pair<std::vector<Meta>, std::vector<size_t> > pair = genHelper(directory, "", f, &currPosition, true);
+        size_t num_blocks = 0;
+        std::pair<std::vector<Meta>, std::vector<size_t> > pair = genHelper(directory, "", f, &currPosition, true, &num_blocks);
         files = pair.first;
         compressedSizes = pair.second;
 

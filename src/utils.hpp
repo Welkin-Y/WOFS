@@ -40,10 +40,10 @@ class Meta {
     unsigned int owner;
     unsigned int group;
     bool isDir;
-    int num_blocks;
+    size_t num_blocks;
     time_t lastModified;
 public:
-    Meta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, int num_blocks, time_t lastModified);
+    Meta(std::string name, size_t start, size_t size, unsigned int permission, unsigned int owner, unsigned int group, bool isDir, size_t num_blocks, time_t lastModified);
     std::string getName();
     size_t getStart();
     size_t getSize();
@@ -51,7 +51,7 @@ public:
     unsigned int getOwner();
     unsigned int getGroup();
     bool isDirectory();
-    int getNumBlocks();
+    size_t getNumBlocks();
     time_t getLastModified();
 };
 
@@ -129,7 +129,7 @@ int decrypt(int fd, size_t totalsize, unsigned char* keyhash, size_t st_blk, siz
 // int getImageSize(const std::string& path);
 
 size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t begin, size_t len);
-size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t offset, size_t s, std::vector<size_t>& sizes, int bef) ;
+size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t offset, size_t s, std::vector<size_t>& sizes, int bef);
 std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
 
 int verify(FILE* f, unsigned char* keyhash);
