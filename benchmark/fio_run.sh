@@ -6,7 +6,7 @@ IMAGE_FILE="/tmp/wofs_image"
 IMAGE_FILE_en="/tmp/wofs_image_en"
 MOUNT_POINT="/tmp/mnt"
 RESULTS_DIR="result"
-TEST_FILE_SIZE="1G" # Adjust file size as needed
+TEST_FILE_SIZE="1M" # Adjust file size as needed
 NUM_JOBS=4 # Number of parallel jobs to run, adjust as needed
 
 # Create test directory and files
@@ -14,11 +14,11 @@ echo "Creating test directory and files..."
 mkdir -p "$TEST_DIR"
 # cd "$TEST_DIR" || exit
 for i in {0..1000}; do
-    dd if=/dev/zero of="$TEST_DIR"/file"$i".txt bs=1M count=10
+    dd if=/dev/zero of="$TEST_DIR"/file"$i".txt bs=1K count=10
 done
 # cd ..
 
-Generate WOFS image
+#Generate WOFS image
 echo "Generating WOFS image..."
 ../build/wofs gen "$TEST_DIR" "$IMAGE_FILE"
 echo "Mounting WOFS directory..."
