@@ -2,18 +2,18 @@ read_rand: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-40
 fio-3.28
 Starting 1 process
 
-read_rand: (groupid=0, jobs=1): err= 0: pid=2626878: Tue Apr 16 23:27:59 2024
-  read: IOPS=14.2k, BW=55.6MiB/s (58.3MB/s)(1024KiB/18msec)
-    clat (usec): min=60, max=141, avg=62.87, stdev= 6.28
-     lat (usec): min=60, max=142, avg=63.16, stdev= 6.34
+read_rand: (groupid=0, jobs=1): err= 0: pid=2633170: Wed Apr 17 00:37:25 2024
+  read: IOPS=12.8k, BW=50.0MiB/s (52.4MB/s)(1024KiB/20msec)
+    clat (usec): min=53, max=240, avg=73.17, stdev=32.00
+     lat (usec): min=53, max=240, avg=73.40, stdev=32.01
     clat percentiles (usec):
-     |  1.00th=[   61],  5.00th=[   61], 10.00th=[   61], 20.00th=[   62],
-     | 30.00th=[   62], 40.00th=[   62], 50.00th=[   62], 60.00th=[   62],
-     | 70.00th=[   63], 80.00th=[   63], 90.00th=[   66], 95.00th=[   68],
-     | 99.00th=[   87], 99.50th=[  101], 99.90th=[  141], 99.95th=[  141],
-     | 99.99th=[  141]
-  lat (usec)   : 100=99.22%, 250=0.78%
-  cpu          : usr=0.00%, sys=47.06%, ctx=256, majf=0, minf=11
+     |  1.00th=[   55],  5.00th=[   57], 10.00th=[   57], 20.00th=[   58],
+     | 30.00th=[   58], 40.00th=[   58], 50.00th=[   59], 60.00th=[   59],
+     | 70.00th=[   60], 80.00th=[   64], 90.00th=[  135], 95.00th=[  137],
+     | 99.00th=[  153], 99.50th=[  167], 99.90th=[  241], 99.95th=[  241],
+     | 99.99th=[  241]
+  lat (usec)   : 100=80.47%, 250=19.53%
+  cpu          : usr=36.84%, sys=0.00%, ctx=256, majf=0, minf=11
   IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
@@ -21,7 +21,7 @@ read_rand: (groupid=0, jobs=1): err= 0: pid=2626878: Tue Apr 16 23:27:59 2024
      latency   : target=0, window=0, percentile=100.00%, depth=64
 
 Run status group 0 (all jobs):
-   READ: bw=55.6MiB/s (58.3MB/s), 55.6MiB/s-55.6MiB/s (58.3MB/s-58.3MB/s), io=1024KiB (1049kB), run=18-18msec
+   READ: bw=50.0MiB/s (52.4MB/s), 50.0MiB/s-50.0MiB/s (52.4MB/s-52.4MB/s), io=1024KiB (1049kB), run=20-20msec
 
 Disk stats (read/write):
   sda: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%
