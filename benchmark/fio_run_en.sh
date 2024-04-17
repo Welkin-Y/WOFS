@@ -3,7 +3,7 @@
 # Define variables
 TEST_DIR="/tmp/wofs_test"
 IMAGE_FILE="/tmp/wofs_image"
-IMAGE_FILE_en="/tmp/wofs_image_en"
+MOUNT_POINT_EN="/tmp/mnt_en"
 MOUNT_POINT="/tmp/mnt"
 RESULTS_DIR="result"
 TEST_FILE_SIZE="1M" # Adjust file size as needed
@@ -27,14 +27,14 @@ done
 
 
 echo "Generating WOFS_encrpyted image..."
-../build/wofs gen -e "$TEST_DIR" "$IMAGE_FILE" <<EOF
-123456
-EOF
+../build/wofs gen -e "$TEST_DIR" "$IMAGE_FILE" 
+
+
 echo "Mounting WOFS_encrpyted directory..."
 mkdir -p "$MOUNT_POINT_EN"
-../build/wofs mount -e "$IMAGE_FILE.enc" "$MOUNT_POINT_EN"<<EOF
-123456
-EOF
+../build/wofs mount -e "$IMAGE_FILE.enc" "$MOUNT_POINT_EN"
+
+
 
 # Ensure fio is installed
 if ! command -v fio &> /dev/null; then
