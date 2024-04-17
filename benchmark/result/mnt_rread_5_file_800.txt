@@ -2,26 +2,29 @@ read_rand: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-40
 fio-3.28
 Starting 1 process
 
-read_rand: (groupid=0, jobs=1): err= 0: pid=2633633: Wed Apr 17 00:37:33 2024
-  read: IOPS=8258, BW=32.3MiB/s (33.8MB/s)(1024KiB/31msec)
-    clat (usec): min=60, max=314, avg=113.19, stdev=33.92
-     lat (usec): min=61, max=314, avg=113.56, stdev=33.91
+read_rand: (groupid=0, jobs=1): err= 0: pid=2647931: Wed Apr 17 03:33:42 2024
+  read: IOPS=2754, BW=10.8MiB/s (11.3MB/s)(1024MiB/95182msec)
+    clat (usec): min=60, max=4933, avg=357.72, stdev=97.58
+     lat (usec): min=60, max=4934, avg=358.07, stdev=97.60
     clat percentiles (usec):
-     |  1.00th=[   62],  5.00th=[   67], 10.00th=[   74], 20.00th=[   79],
-     | 30.00th=[  105], 40.00th=[  114], 50.00th=[  115], 60.00th=[  118],
-     | 70.00th=[  127], 80.00th=[  133], 90.00th=[  137], 95.00th=[  200],
-     | 99.00th=[  212], 99.50th=[  219], 99.90th=[  314], 99.95th=[  314],
-     | 99.99th=[  314]
-  lat (usec)   : 100=28.91%, 250=70.70%, 500=0.39%
-  cpu          : usr=0.00%, sys=40.00%, ctx=256, majf=0, minf=12
+     |  1.00th=[  101],  5.00th=[  163], 10.00th=[  217], 20.00th=[  273],
+     | 30.00th=[  322], 40.00th=[  347], 50.00th=[  379], 60.00th=[  404],
+     | 70.00th=[  412], 80.00th=[  433], 90.00th=[  478], 95.00th=[  494],
+     | 99.00th=[  515], 99.50th=[  519], 99.90th=[  537], 99.95th=[  562],
+     | 99.99th=[  857]
+   bw (  KiB/s): min= 7192, max=12744, per=100.00%, avg=11030.64, stdev=535.37, samples=190
+   iops        : min= 1798, max= 3186, avg=2757.65, stdev=133.86, samples=190
+  lat (usec)   : 100=0.84%, 250=14.57%, 500=81.17%, 750=3.41%, 1000=0.01%
+  lat (msec)   : 2=0.01%, 10=0.01%
+  cpu          : usr=2.37%, sys=10.37%, ctx=262163, majf=0, minf=38
   IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
-     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     issued rwts: total=262144,0,0,0 short=0,0,0,0 dropped=0,0,0,0
      latency   : target=0, window=0, percentile=100.00%, depth=64
 
 Run status group 0 (all jobs):
-   READ: bw=32.3MiB/s (33.8MB/s), 32.3MiB/s-32.3MiB/s (33.8MB/s-33.8MB/s), io=1024KiB (1049kB), run=31-31msec
+   READ: bw=10.8MiB/s (11.3MB/s), 10.8MiB/s-10.8MiB/s (11.3MB/s-11.3MB/s), io=1024MiB (1074MB), run=95182-95182msec
 
 Disk stats (read/write):
-  sda: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%
+  sda: ios=261968/20, merge=0/15, ticks=86576/6, in_queue=86581, util=99.82%

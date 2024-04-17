@@ -6,7 +6,7 @@ IMAGE_FILE="/tmp/wofs_image"
 IMAGE_FILE_en="/tmp/wofs_image_en"
 MOUNT_POINT="/tmp/mnt"
 RESULTS_DIR="result"
-TEST_FILE_SIZE="1M" # Adjust file size as needed
+TEST_FILE_SIZE="1G" # Adjust file size as needed
 NUM_JOBS=4 # Number of parallel jobs to run, adjust as needed
 
 # Create test directory and files
@@ -47,7 +47,7 @@ mkdir -p "$RESULTS_DIR"
 
 mkdir -p "/tmp/t1"
 
-for i in {1..10}; do
+for i in {1..5}; do
         fio --directory="/tmp/t1" --name=read_seq --filename="$TEST_DIR"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read --output="$RESULTS_DIR"/org_sread_"$i"_all.txt
 
         fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR"/mnt_sread_"$i"_all.txt
