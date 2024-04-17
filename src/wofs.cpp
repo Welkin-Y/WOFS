@@ -409,8 +409,8 @@ int handle_mount_command(int argc, char* argv[]) {
     wo_data->rootdir = realpath(argv[argc - 2], NULL);
 
     argv[argc - 2] = argv[argc - 1];
-    argv[argc - 1] = "-f";
-    // argc--;
+    argv[argc - 1] = NULL;
+    argc--;
 
 
 
@@ -450,15 +450,15 @@ int handle_mount_command(int argc, char* argv[]) {
             std::pair<std::vector<Meta>, std::vector<size_t> > pair = parseEncCompMeta(fd, totalsize, imageFile, keyhash);
             metaList = pair.first;
             sizes = pair.second;
-            for (int i = 0; i < metaList.size(); i++) {
-                std::cout << "meta no. " << i << ": \n";
-                std::cout << metaList[i].getName() << std::endl;
-            }
-            std::cout << "found " << sizes.size() << " compressed blocks\n";
-            for (int i = 0; i < sizes.size(); i++) {
+            // for (int i = 0; i < metaList.size(); i++) {
+            //     std::cout << "meta no. " << i << ": \n";
+            //     std::cout << metaList[i].getName() << std::endl;
+            // }
+            // std::cout << "found " << sizes.size() << " compressed blocks\n";
+            // for (int i = 0; i < sizes.size(); i++) {
 
-                std::cout << sizes[i] << std::endl;
-            }
+            //     std::cout << sizes[i] << std::endl;
+            // }
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
