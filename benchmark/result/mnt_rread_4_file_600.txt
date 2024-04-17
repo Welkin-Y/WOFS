@@ -2,21 +2,21 @@ read_rand: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-40
 fio-3.28
 Starting 1 process
 
-read_rand: (groupid=0, jobs=1): err= 0: pid=2646872: Wed Apr 17 03:12:01 2024
-  read: IOPS=2990, BW=11.7MiB/s (12.2MB/s)(1024MiB/87648msec)
-    clat (usec): min=60, max=4898, avg=329.05, stdev=101.34
-     lat (usec): min=61, max=4899, avg=329.42, stdev=101.37
+read_rand: (groupid=0, jobs=1): err= 0: pid=2673441: Wed Apr 17 10:25:27 2024
+  read: IOPS=2959, BW=11.6MiB/s (12.1MB/s)(1024MiB/88573msec)
+    clat (usec): min=55, max=4814, avg=332.71, stdev=96.08
+     lat (usec): min=55, max=4814, avg=333.06, stdev=96.10
     clat percentiles (usec):
-     |  1.00th=[   90],  5.00th=[  109], 10.00th=[  174], 20.00th=[  255],
-     | 30.00th=[  289], 40.00th=[  322], 50.00th=[  343], 60.00th=[  359],
-     | 70.00th=[  396], 80.00th=[  416], 90.00th=[  441], 95.00th=[  486],
-     | 99.00th=[  510], 99.50th=[  515], 99.90th=[  529], 99.95th=[  545],
-     | 99.99th=[  816]
-   bw (  KiB/s): min= 7672, max=13472, per=100.00%, avg=11976.37, stdev=949.74, samples=175
-   iops        : min= 1918, max= 3368, avg=2994.09, stdev=237.43, samples=175
-  lat (usec)   : 100=3.28%, 250=14.29%, 500=80.43%, 750=1.98%, 1000=0.01%
+     |  1.00th=[   93],  5.00th=[  153], 10.00th=[  196], 20.00th=[  255],
+     | 30.00th=[  293], 40.00th=[  322], 50.00th=[  338], 60.00th=[  363],
+     | 70.00th=[  400], 80.00th=[  412], 90.00th=[  437], 95.00th=[  486],
+     | 99.00th=[  506], 99.50th=[  515], 99.90th=[  529], 99.95th=[  545],
+     | 99.99th=[  832]
+   bw (  KiB/s): min= 7400, max=14216, per=100.00%, avg=11842.48, stdev=715.83, samples=176
+   iops        : min= 1850, max= 3554, avg=2960.63, stdev=178.94, samples=176
+  lat (usec)   : 100=2.80%, 250=14.44%, 500=80.95%, 750=1.80%, 1000=0.01%
   lat (msec)   : 2=0.01%, 10=0.01%
-  cpu          : usr=2.57%, sys=10.93%, ctx=262155, majf=0, minf=18
+  cpu          : usr=2.42%, sys=10.05%, ctx=262167, majf=0, minf=17
   IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
@@ -24,7 +24,7 @@ read_rand: (groupid=0, jobs=1): err= 0: pid=2646872: Wed Apr 17 03:12:01 2024
      latency   : target=0, window=0, percentile=100.00%, depth=64
 
 Run status group 0 (all jobs):
-   READ: bw=11.7MiB/s (12.2MB/s), 11.7MiB/s-11.7MiB/s (12.2MB/s-12.2MB/s), io=1024MiB (1074MB), run=87648-87648msec
+   READ: bw=11.6MiB/s (12.1MB/s), 11.6MiB/s-11.6MiB/s (12.1MB/s-12.1MB/s), io=1024MiB (1074MB), run=88573-88573msec
 
 Disk stats (read/write):
-  sda: ios=262038/20, merge=0/17, ticks=79283/7, in_queue=79289, util=99.78%
+  sda: ios=261413/31, merge=0/25, ticks=72480/6, in_queue=72487, util=99.82%

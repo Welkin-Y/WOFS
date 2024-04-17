@@ -52,7 +52,8 @@ for i in {1..5}; do
 
         # fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR"/mnt_sread_"$i"_all.txt
 
-        fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT_EN"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR"/en_sread_"$i"_all.txt
+        sudo bash -c "sync; echo 3 > /proc/sys/vm/drop_caches"
+	fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT_EN"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR"/en_sread_"$i"_all.txt
 
         
         # Random read test
@@ -61,6 +62,8 @@ for i in {1..5}; do
         #fio --directory="/tmp/t1" --name=read_rand --filename="$TEST_DIR"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --output="$RESULTS_DIR"/org_rread_"$i"_all.txt
         
         # fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread  --output="$RESULTS_DIR"/mnt_rread_"$i"_all.txt
+
+	sudo bash -c "sync; echo 3 > /proc/sys/vm/drop_caches"
 
         fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT_EN"/* --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread  --output="$RESULTS_DIR"/en_rread_"$i"_all.txt
        
@@ -75,6 +78,8 @@ for ((n = 0; n <= 1000; n += 200)); do
         
         # fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT"/file"$n".txt --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR/mnt_sread_"$i"_file_"$n".txt"
 
+	sudo bash -c "sync; echo 3 > /proc/sys/vm/drop_caches"
+
         fio --directory="/tmp/t1" --name=read_seq --filename="$MOUNT_POINT_EN"/file"$n".txt --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=read  --output="$RESULTS_DIR/en_sread_"$i"_file_"$n".txt"
         
         
@@ -82,8 +87,9 @@ for ((n = 0; n <= 1000; n += 200)); do
         #fio --directory="/tmp/t1" --name=read_rand --filename="$TEST_DIR"/file"$n".txt --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread --output="$RESULTS_DIR/org_rread_"$i"_file_"$n".txt"
         
         # fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT"/file"$n".txt --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread  --output="$RESULTS_DIR/mnt_rread_"$i"_file_"$n".txt"
-        
-        fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT_EN"/file"$n".txt --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread  --output="$RESULTS_DIR/en_rread_"$i"_file_"$n".txt"
+        sudo bash -c "sync; echo 3 > /proc/sys/vm/drop_caches"
+
+	fio --directory="/tmp/t1" --name=read_rand --filename="$MOUNT_POINT_EN"/file"$n".txt --bs=4k --iodepth=64 --size="$TEST_FILE_SIZE" --readwrite=randread  --output="$RESULTS_DIR/en_rread_"$i"_file_"$n".txt"
 
     done
 done
