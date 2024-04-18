@@ -2,20 +2,21 @@ read_seq: (g=0): rw=read, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, 
 fio-3.28
 Starting 1 process
 
-read_seq: (groupid=0, jobs=1): err= 0: pid=2716969: Wed Apr 17 16:44:18 2024
-  read: IOPS=25.6k, BW=100MiB/s (105MB/s)(10.0MiB/100msec)
-    clat (usec): min=3, max=2410, avg=37.15, stdev=237.70
-     lat (usec): min=3, max=2410, avg=37.31, stdev=237.70
-    clat percentiles (usec):
-     |  1.00th=[    4],  5.00th=[    4], 10.00th=[    4], 20.00th=[    4],
-     | 30.00th=[    4], 40.00th=[    4], 50.00th=[    4], 60.00th=[    4],
-     | 70.00th=[    4], 80.00th=[    5], 90.00th=[    5], 95.00th=[    6],
-     | 99.00th=[ 1647], 99.50th=[ 2114], 99.90th=[ 2376], 99.95th=[ 2376],
-     | 99.99th=[ 2409]
-  lat (usec)   : 4=79.65%, 10=17.81%, 20=0.31%, 50=0.04%, 750=0.23%
-  lat (usec)   : 1000=0.31%
-  lat (msec)   : 2=0.90%, 4=0.74%
-  cpu          : usr=10.10%, sys=8.08%, ctx=57, majf=1, minf=12
+read_seq: (groupid=0, jobs=1): err= 0: pid=68577: Wed Apr 17 20:49:42 2024
+  read: IOPS=64.0k, BW=250MiB/s (262MB/s)(10.0MiB/40msec)
+    clat (nsec): min=1010, max=4386.9k, avg=14955.60, stdev=156192.92
+     lat (nsec): min=1032, max=4386.9k, avg=14988.20, stdev=156193.49
+    clat percentiles (nsec):
+     |  1.00th=[   1020],  5.00th=[   1032], 10.00th=[   1048],
+     | 20.00th=[   1096], 30.00th=[   1160], 40.00th=[   1224],
+     | 50.00th=[   1272], 60.00th=[   1368], 70.00th=[   1608],
+     | 80.00th=[   1752], 90.00th=[   1992], 95.00th=[   2576],
+     | 99.00th=[ 362496], 99.50th=[ 473088], 99.90th=[2768896],
+     | 99.95th=[3325952], 99.99th=[4358144]
+  lat (usec)   : 2=90.08%, 4=6.52%, 10=0.98%, 20=0.04%, 100=0.16%
+  lat (usec)   : 250=0.82%, 500=0.98%, 750=0.16%, 1000=0.04%
+  lat (msec)   : 4=0.20%, 10=0.04%
+  cpu          : usr=0.00%, sys=23.08%, ctx=106, majf=1, minf=12
   IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
@@ -23,4 +24,4 @@ read_seq: (groupid=0, jobs=1): err= 0: pid=2716969: Wed Apr 17 16:44:18 2024
      latency   : target=0, window=0, percentile=100.00%, depth=1
 
 Run status group 0 (all jobs):
-   READ: bw=100MiB/s (105MB/s), 100MiB/s-100MiB/s (105MB/s-105MB/s), io=10.0MiB (10.5MB), run=100-100msec
+   READ: bw=250MiB/s (262MB/s), 250MiB/s-250MiB/s (262MB/s-262MB/s), io=10.0MiB (10.5MB), run=40-40msec
