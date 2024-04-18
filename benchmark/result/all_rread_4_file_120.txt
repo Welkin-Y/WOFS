@@ -1,0 +1,12 @@
+read_rand: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=psync, iodepth=1
+fio-3.28
+Starting 1 process
+read_rand: Laying out IO file (1 file / 10MiB)
+fio: refusing extend of file due to read-only
+fio: cache invalidation of /tmp/mnt_en/file120.txt failed: Bad file descriptor
+
+
+Run status group 0 (all jobs):
+
+Disk stats (read/write):
+  sda: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%

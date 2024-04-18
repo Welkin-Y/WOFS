@@ -2,19 +2,19 @@ read_rand: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-40
 fio-3.28
 Starting 1 process
 
-read_rand: (groupid=0, jobs=1): err= 0: pid=69345: Wed Apr 17 20:50:31 2024
-  read: IOPS=36.6k, BW=143MiB/s (150MB/s)(10.0MiB/70msec)
-    clat (usec): min=19, max=734, avg=26.38, stdev=34.06
-     lat (usec): min=19, max=734, avg=26.44, stdev=34.07
+read_rand: (groupid=0, jobs=1): err= 0: pid=2751763: Wed Apr 17 21:10:22 2024
+  read: IOPS=5171, BW=20.2MiB/s (21.2MB/s)(10.0MiB/495msec)
+    clat (usec): min=148, max=1320, avg=189.50, stdev=56.72
+     lat (usec): min=148, max=1321, avg=189.83, stdev=56.74
     clat percentiles (usec):
-     |  1.00th=[   20],  5.00th=[   20], 10.00th=[   20], 20.00th=[   21],
-     | 30.00th=[   21], 40.00th=[   21], 50.00th=[   22], 60.00th=[   22],
-     | 70.00th=[   23], 80.00th=[   23], 90.00th=[   26], 95.00th=[   31],
-     | 99.00th=[  225], 99.50th=[  273], 99.90th=[  416], 99.95th=[  519],
-     | 99.99th=[  734]
-  lat (usec)   : 20=12.07%, 50=85.55%, 100=0.66%, 250=1.13%, 500=0.51%
-  lat (usec)   : 750=0.08%
-  cpu          : usr=0.00%, sys=36.23%, ctx=2564, majf=1, minf=11
+     |  1.00th=[  153],  5.00th=[  155], 10.00th=[  157], 20.00th=[  163],
+     | 30.00th=[  165], 40.00th=[  165], 50.00th=[  167], 60.00th=[  169],
+     | 70.00th=[  178], 80.00th=[  229], 90.00th=[  245], 95.00th=[  297],
+     | 99.00th=[  318], 99.50th=[  326], 99.90th=[ 1254], 99.95th=[ 1319],
+     | 99.99th=[ 1319]
+  lat (usec)   : 250=92.50%, 500=7.38%
+  lat (msec)   : 2=0.12%
+  cpu          : usr=6.48%, sys=11.54%, ctx=2560, majf=1, minf=11
   IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
@@ -22,8 +22,7 @@ read_rand: (groupid=0, jobs=1): err= 0: pid=69345: Wed Apr 17 20:50:31 2024
      latency   : target=0, window=0, percentile=100.00%, depth=1
 
 Run status group 0 (all jobs):
-   READ: bw=143MiB/s (150MB/s), 143MiB/s-143MiB/s (150MB/s-150MB/s), io=10.0MiB (10.5MB), run=70-70msec
+   READ: bw=20.2MiB/s (21.2MB/s), 20.2MiB/s-20.2MiB/s (21.2MB/s-21.2MB/s), io=10.0MiB (10.5MB), run=495-495msec
 
 Disk stats (read/write):
-    dm-0: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%, aggrios=2565/0, aggrmerge=0/0, aggrticks=52/0, aggrin_queue=51, aggrutil=41.76%
-  sda: ios=2565/0, merge=0/0, ticks=52/0, in_queue=51, util=41.76%
+  sda: ios=1817/0, merge=0/0, ticks=307/0, in_queue=306, util=77.85%
