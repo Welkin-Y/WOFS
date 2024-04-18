@@ -12,7 +12,6 @@
 ├── README.md
 ├── run_test.sh
 ├── src
-│   ├── encryption.cpp
 │   ├── log.c
 │   ├── log.h
 │   ├── params.h
@@ -61,11 +60,16 @@ done (for now)
 
 ### encryption
 
-+ encrypt an image
-+ HMAC
++ encrypt an image 
 + decrypt the image and build directory tree
 + read file content from encrypted image 
++ seekable random access
 
+### compression
+
+### issues
+
+CI pipeline
 
 ## Acknowledgements
 *TBD*

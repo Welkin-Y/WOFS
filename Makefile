@@ -2,8 +2,8 @@
 
 # Compiler and flags
 CC := g++
-CFLAGS := -Wall -std=c++2a -O3 -D_FILE_OFFSET_BITS=64 -lssl -lcrypto
-LDFLAGS := -lssl -lcrypto # Library flags for linking
+CFLAGS := -Wall -std=c++2a -O3 -D_FILE_OFFSET_BITS=64 -lssl -lcrypto -lz -g
+LDFLAGS := -lssl -lcrypto -lz -g # Library flags for linking
 LIBS := `pkg-config fuse --cflags --libs`
 
 # Directories

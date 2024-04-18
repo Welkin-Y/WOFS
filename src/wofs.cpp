@@ -11,14 +11,21 @@
 #include "log.h"
 #include "utils.hpp"
 
-
 int blk_size;
 TreeNode* root_node;
+std::vector<size_t> sizes;
 FILE* imageFile;
 std::string imgPath;
 bool encrypted = false;
 int aes_blk_size = 32;
+int chunk_size = 1024;
+int fd = -1;
+size_t totalsize = 0;
+
+
 unsigned char keyhash[SHA256_DIGEST_LENGTH];
+
+
 
 /**
  * creates a wofs image with files in path, stored in image_path
@@ -30,17 +37,27 @@ int wo_make_image(const char* path, const char* image_path) {
     // TODO: write an acutal implementation
 
     fprintf(stderr, "making image from %s to %s\n", path, image_path);
-    generateImage(path, image_path);
     if (encrypted) {
+        generateCompressedImage(path, image_path);
+
         std::string key;
         std::cout << "Enter the key: ";
-        system("stty -echo");
+        if (system("stty -echo") != 0) {
+            perror("Error: Cannot hide input\n");
+
+        }
         std::cin >> key;
-        system("stty echo");
+        if (system("stty echo") != 0) {
+            perror("Error: Cannot show input\n");
+
+        }
+        std::cout << std::endl;
         encrypt(image_path, key);
         std::cout << "image encrypted as " << image_path << ".enc\n";
         remove(image_path);
+        return EXIT_SUCCESS;
     }
+    generateImage(path, image_path);
     encrypted = false; //reset encryption flag
     return EXIT_SUCCESS;
 }
@@ -101,7 +118,7 @@ int wo_getattr(const char* path, struct stat* statbuf) {
     log_msg("getattr: %s\n", path);
     TreeNode* t = root_node->find(path);
     if (t == nullptr) {
-        log_msg("not found.\n");
+        log_msg("f not found.\n");
         return -ENOENT;
     }
     else {
@@ -138,26 +155,30 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     if (encrypted) {
         log_msg("encrypted wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
             path, buf, size, offset, fi);
+
+
     }
     else {
         log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-
             path, buf, size, offset, fi);
     }
     TreeNode* found = root_node->find(path);
     if (!found) {
+        std::cout << "file not found\n";
         return -ENOENT;
     }
     long f_size = found->getMeta().getSize();
     if (offset > f_size) {
+        std::cout << "offset > f_size\n";
         return 0;
     }
 
     long s = (long)size > f_size - offset ? f_size - offset : size;
-    memset(buf, 0, size);
+    memset(buf, 0, s);
     log_msg("   Found file: start: %ld, size: %ld\n", found->getMeta().getStart(), f_size);
 
     if (encrypted) {
+
         log_msg("reading encrypted file\n   keyhash: ");
         for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
             log_msg("%02x", keyhash[i]);
@@ -166,14 +187,20 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         log_msg("pos of buffer: %p\n", buf);
         log_msg("offset: %ld\n", found->getMeta().getStart() + offset);
         log_msg("size: %ld\n", s);
-        int ofs = found->getMeta().getStart() + offset;
 
-        readEncImage(imageFile, keyhash, (unsigned char*)buf, ofs, s);
-
+        unsigned char* temp = (unsigned char*)malloc(s);
+        int ret = readEncComImage(fd, totalsize, keyhash, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
+        if (ret != 0) {
+            std::cout << "error reading compressed image\n";
+            return ret;
+        }
         return s;
     }
     fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
-    return fread(buf, 1, s, imageFile);
+
+    size_t r = fread(buf, 1, s, imageFile);
+    std::cout << "read " << r << " bytes\n";
+    return r;
     // log_msg("%s\n",buf);
     // return found->getMeta().getSize();
 }
@@ -322,11 +349,13 @@ int handle_gen_command(int argc, char* argv[]) {
     }
     for (int i = 2; i < argc - 2; i++) { // Skip command and last two arguments (directory and image file)
         if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
-            encrypted = true; 
-        } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            encrypted = true;
+        }
+        else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             wo_gen_usage();
             return EXIT_SUCCESS;
-        } else {
+        }
+        else {
             fprintf(stderr, "Unknown or unsupported option: %s\n", argv[i]);
             wo_gen_usage();
             return EXIT_FAILURE;
@@ -339,26 +368,30 @@ int handle_gen_command(int argc, char* argv[]) {
 
     // Info
     printf("Generating image from directory '%s' to file '%s'. Encryption: %s\n",
-           directory, imageFilePath, encrypt ? "enabled" : "disabled");
+        directory, imageFilePath, encrypted ? "enabled" : "disabled");
     wo_make_image(directory, imageFilePath);
     return EXIT_SUCCESS;
 }
 
 int handle_mount_command(int argc, char* argv[]) {
+
     if (argc < 4) { // Basic argument count check
         wo_mount_usage();
         return EXIT_FAILURE;
     }
-    for (int i = 2; i < argc - 2; i++) { // Skip command and last two arguments (image file and mount point)
-        if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--decrypt") == 0) {
-            encrypted = true; 
-        } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-            wo_mount_usage();
-            return EXIT_SUCCESS;
-        } else {
-            fprintf(stderr, "Unknown or unsupported option: %s\n", argv[i]);
-            wo_mount_usage();
-            return EXIT_FAILURE;
+    argc--;
+    for (int j = 1; j < argc; j++) {
+        argv[j] = argv[j + 1];
+    }
+    argv[argc] = NULL;
+    for (int i = 1; i < argc - 2; i++) { // Skip command and last two arguments (image file and mount point)
+        if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
+            encrypted = true;
+            argc--;
+            for (int j = i; j < argc; j++) {
+                argv[j] = argv[j + 1];
+            }
+            argv[argc] = NULL;
         }
     }
 
@@ -373,10 +406,13 @@ int handle_mount_command(int argc, char* argv[]) {
         abort();
     }
 
-    wo_data->rootdir = realpath(imageFilePath, NULL);
-    argv[1] = argv[argc - 1];
-    // argv[argc - 1] = NULL;
-    // argc--;
+    wo_data->rootdir = realpath(argv[argc - 2], NULL);
+
+    argv[argc - 2] = argv[argc - 1];
+    argv[argc - 1] = NULL;
+    argc--;
+
+
 
     wo_data->logfile = log_open();
 
@@ -389,45 +425,72 @@ int handle_mount_command(int argc, char* argv[]) {
     if (encrypted) {
         std::cout << "Enter the key: ";
         // hide input 
-        system("stty -echo");
+        if (system("stty -echo") != 0) {
+            perror("Error: Cannot hide input\n");
+
+        }
         std::cin >> key;
-        system("stty echo");
+        if (system("stty echo") != 0) {
+            perror("Error: Cannot show input\n");
+
+        }
+        std::cout << std::endl;
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
     }
 
     std::vector<Meta> metaList;
     if (encrypted) {
         SHA256((unsigned char*)key.c_str(), key.size(), keyhash);
-        FILE* imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "rb");
+        fseek(imageFile, 0, SEEK_END);
+        totalsize = ftell(imageFile);
+        fseek(imageFile, 0, SEEK_SET);
+        fd = fileno(imageFile);
         try {
-            metaList = readEncMeta(imageFile, keyhash);
+            std::pair<std::vector<Meta>, std::vector<size_t> > pair = parseEncCompMeta(fd, totalsize, imageFile, keyhash);
+            metaList = pair.first;
+            sizes = pair.second;
+            // for (int i = 0; i < metaList.size(); i++) {
+            //     std::cout << "meta no. " << i << ": \n";
+            //     std::cout << metaList[i].getName() << std::endl;
+            // }
+            // std::cout << "found " << sizes.size() << " compressed blocks\n";
+            // for (int i = 0; i < sizes.size(); i++) {
+
+            //     std::cout << sizes[i] << std::endl;
+            // }
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             return EXIT_FAILURE;
         }
-        imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "rb");
     }
     else {
-        FILE* imageFile = fopen(wo_data->rootdir, "r");
+        imageFile = fopen(wo_data->rootdir, "rb");
+
         if (imageFile == nullptr) {
             perror("Error: Cannot open the image file for file system\n");
             return EXIT_FAILURE;
         }
         metaList = readAllMeta(imageFile);
     }
-    std::cout << "Found " << metaList.size() << " meta data\n";
+    // std::cout << "Found " << metaList.size() << " meta data\n";
     root_node = generateTree(metaList);
     // turn over control to fuse
     fprintf(stderr, "about to call fuse_main\n");
-    fuse_stat = fuse_main(2, argv, &wo_oper, wo_data);
+    for (int i = 0;i < argc;i++) {
+        std::cout << argv[i] << " ";
+    }
+    std::cout << std::endl;
+    fuse_stat = fuse_main(argc, argv, &wo_oper, wo_data);
     fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
 
 
     // dummy root 
-        // Info
+    // Info
     printf("Mounting image file '%s' to mount point '%s'. Decryption: %s\n",
-           imageFilePath, mountPoint, decrypt ? "enabled" : "disabled");
+        imageFilePath, mountPoint, encrypted ? "enabled" : "disabled");
 
     return fuse_stat;
 }
@@ -448,23 +511,15 @@ int wo_options(int argc, char* argv[]) {
 
     else if (strcmp(argv[1], "gen") == 0) {
         return handle_gen_command(argc, argv);
-    } else if (strcmp(argv[1], "mount") == 0) {
+    }
+    else if (strcmp(argv[1], "mount") == 0) {
         return handle_mount_command(argc, argv);
-    } else {
+    }
+    else {
         fprintf(stderr, "Unknown command: %s\n", argv[1]);
         wo_usage();
         return EXIT_FAILURE;
     }
-    // // other options
-    // if (strcmp(argv[1], "-g") == 0) {
-    //     if (argc < 4) {
-    //         wo_usage();
-    //         return EXIT_FAILURE;
-    //     }
-    //     wo_make_image(argv[2], argv[3]);
-    //     return EXIT_FAILURE;
-    // }
-    // no options
     return EXIT_SUCCESS;
 }
 
