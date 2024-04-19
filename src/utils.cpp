@@ -761,6 +761,7 @@ size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned c
 
 
     unsigned char holder[(ed_blk - st_blk + 1) * aes_block_size];
+    memset (holder, 0, (ed_blk - st_blk + 1) * aes_block_size);
     // std::cout << "ready to call decrypt()\n";
 
     decrypt(fd, totalsize, keyhash, st_blk, ed_blk, holder);
@@ -772,25 +773,6 @@ size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned c
         int p;
         memcpy(&p, buffer, sizeof(int));
         // std::cout << "the number read is : " << p << std::endl;
-    }
-    return len;
-}
-
-size_t readImage(int fd, size_t totalsize, unsigned char* buffer, size_t begin, size_t len) {
-
-
-    size_t end = begin + len;
-    size_t st_blk = begin / aes_block_size;
-    size_t ed_blk = end / aes_block_size;
-    size_t st_offset = begin % aes_block_size;
-
-
-    unsigned char holder[(ed_blk - st_blk + 1) * aes_block_size];
-    memcpy(buffer, holder + st_offset, len);
-
-    if (len == sizeof(int)) {
-        int p;
-        memcpy(&p, buffer, sizeof(int));
     }
     return len;
 }
@@ -812,9 +794,9 @@ size_t readImage(int fd, size_t totalsize, unsigned char* buffer, size_t begin, 
 */
 size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t offset, size_t s, std::vector<size_t>& sizes, int bef) {
     size_t ucb_start = offset / CHUNK_SIZE + bef;
-    // log_msg("ucb_start: %ld\n", ucb_start);
+    printf("ucb_start: %ld\n", ucb_start);
     size_t ucb_end = (offset + s) / CHUNK_SIZE + bef;
-    // log_msg("ucb_end: %ld\n", ucb_end);
+    printf("ucb_end: %ld\n", ucb_end);
     size_t x = (ucb_end - ucb_start + 2) * CHUNK_SIZE;
     unsigned char decompressed_buffer[x];
 
@@ -831,24 +813,24 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
         //  std::cout << "reading block " << i << std::endl;
           // read encrypted block
         curr_size = sizes[i] - curr_pos;
-        // log_msg("reading encrypted compression block %ld\n", i);
-        // log_msg("corresponding size is %ld\n", curr_size);
+        printf("reading encrypted compression block %ld\n", i);
+        printf("corresponding size is %ld\n", curr_size);
         unsigned char compressed_block[curr_size];
         memset(compressed_block, 0, curr_size);
         size_t r = readEncImage(fd, totalsize, keyhash, compressed_block, cb_start_pos, curr_size);
-        // log_msg("received %ld bytes\n", r);
-        // log_msg("compressed block %ld: ", i);
+        printf("received %ld bytes\n", r);
+        printf("compressed block %ld: ", i);
         std::stringstream ss;
         for (int j = 0; j < r; j++) {
             ss << std::hex << (int)compressed_block[j];
         }
-        // log_msg("%s\n", ss.str().c_str());
-        // log_msg("\n");
-        // log_msg("readEncImage done: read %ld bytes\n", r);
+        printf("%s\n", ss.str().c_str());
+        printf("\n");
+        printf("readEncImage done: read %ld bytes\n", r);
         // decompressed_len should always be chunk_size
         int v = (i - ucb_start) * CHUNK_SIZE;
         int r2 = decompress(compressed_block, sizes[i], decompressed_buffer + v, &decompressed_len);
-        // log_msg("decompressed len: %ld\n", decompressed_len);
+        printf("decompressed len: %ld\n", decompressed_len);
 
 
         curr_pos = sizes[i];
@@ -863,9 +845,9 @@ size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigne
 
 size_t readComImage(int fd, size_t totalsize, unsigned char* buffer, size_t offset, size_t s, std::vector<size_t>& sizes, int bef) {
  size_t ucb_start = offset / CHUNK_SIZE + bef;
-    // log_msg("ucb_start: %ld\n", ucb_start);
+    printf("ucb_start: %ld\n", ucb_start);
     size_t ucb_end = (offset + s) / CHUNK_SIZE + bef;
-    // log_msg("ucb_end: %ld\n", ucb_end);
+    printf("ucb_end: %ld\n", ucb_end);
     size_t x = (ucb_end - ucb_start + 2) * CHUNK_SIZE;
     unsigned char decompressed_buffer[x];
 
@@ -880,26 +862,25 @@ size_t readComImage(int fd, size_t totalsize, unsigned char* buffer, size_t offs
 
     for (size_t i = ucb_start; i <= ucb_end; i++) {
         //  std::cout << "reading block " << i << std::endl;
-          // read encrypted block
+          // read block
         curr_size = sizes[i] - curr_pos;
-        // log_msg("reading encrypted compression block %ld\n", i);
-        // log_msg("corresponding size is %ld\n", curr_size);
+        printf("reading compression block %ld\n", i);
+        printf("corresponding size is %ld\n", curr_size);
         unsigned char compressed_block[curr_size];
         memset(compressed_block, 0, curr_size);
-        size_t r = readImage(fd, totalsize, compressed_block, cb_start_pos, curr_size);
-        // log_msg("received %ld bytes\n", r);
-        // log_msg("compressed block %ld: ", i);
+        size_t r = pread(fd, compressed_block, curr_size, cb_start_pos);
+        printf("received %ld bytes\n", r);
+        printf("compressed block %ld: ", i);
         std::stringstream ss;
         for (int j = 0; j < r; j++) {
             ss << std::hex << (int)compressed_block[j];
         }
-        // log_msg("%s\n", ss.str().c_str());
-        // log_msg("\n");
-        // log_msg("readEncImage done: read %ld bytes\n", r);
+        printf("%s\n", ss.str().c_str());
+        printf("readEncImage done: read %ld bytes\n", r);
         // decompressed_len should always be chunk_size
         int v = (i - ucb_start) * CHUNK_SIZE;
         int r2 = decompress(compressed_block, sizes[i], decompressed_buffer + v, &decompressed_len);
-        // log_msg("decompressed len: %ld\n", decompressed_len);
+        printf("decompressed len: %ld\n", decompressed_len);
 
 
         curr_pos = sizes[i];
@@ -1089,56 +1070,6 @@ std::pair<std::vector<Meta>, std::vector<size_t> > parseEncCompMeta(int fd, size
 
 }
 
-std::pair<std::vector<Meta>, std::vector<size_t> > parseCompMeta(int fd, size_t totalsize, FILE* f) {
-    std::cout << "call parse Comp Meta\n";
-    int imgsize = totalsize;
-    unsigned char buffer[sizeof(int)];
-    if (!readImage(fd, totalsize, buffer, imgsize - sizeof(int), sizeof(int))) {
-        fprintf(stderr, "Error: failed to read image when doing imgsize read\n");
-        throw std::runtime_error("failed to read image");
-    }
-    int p;
-    memcpy(&p, buffer, sizeof(int));
-    // this p holds the position of the start of the vector of sizes
-    if (p < 0 || p > imgsize) {
-        std::cout << "Error: invalid position p" << p << ", imgsize: " << imgsize << std::endl;
-        throw std::runtime_error("invalid position p" + p);
-    }
-     std::cout << "the position of the start of vector of sizes is " << p << std::endl;
-    if (!readImage(fd, totalsize, buffer, p - sizeof(int), sizeof(int))) {
-        fprintf(stderr, "Error: failed to read image when doing meta read\n");
-        throw std::runtime_error("failed to read image");
-    }
-    int p2;
-    memcpy(&p2, buffer, sizeof(int));
-     std::cout << "now p2 holds the position of the start of meta: " << p2 << std::endl;
-      // now this p holds the position of the start of meta
-
-
-      // the meta area's size is p - p2 - sizeof(int)
-    unsigned char metaBuffer[p - p2];
-    if (!readImage(fd, totalsize, metaBuffer, p2, p - p2)) {
-        fprintf(stderr, "Error: failed to read image when doing meta read\n");
-        throw std::runtime_error("failed to read image");
-
-    }
-    std::vector<Meta> metas = readAllMeta((char*)metaBuffer, p - p2);
-    unsigned char sizeBuffer[imgsize - p];
-    if (!readImage(fd, totalsize, sizeBuffer, p, imgsize - p)) {
-        fprintf(stderr, "Error: failed to read image when doing meta read\n");
-        throw std::runtime_error("failed to read image");
-    }
-    std::vector<size_t> sizes = readAllSizes((char*)sizeBuffer, imgsize - p);
-
-
-    // std::cout << "received " << sizes.size() << " sizes and " << metas.size() << " metas\n";
-
-    return std::make_pair(metas, sizes);
-
-}
-
-
-
 int compress(const unsigned char* src, size_t src_len, unsigned char* dest, size_t* dest_len) {
     z_stream strm;
     int ret;
@@ -1210,8 +1141,8 @@ int decompress(const unsigned char* src, size_t src_len, unsigned char* dest, si
 int write_sizes(const std::vector<size_t>& sizes, FILE* f) {
     int p = ftell(f);
 
-    std::cout << "writing sizes to image\n";
-     std::cout << "without size vector the position is " << p << std::endl;
+    // std::cout << "writing sizes to image\n";
+    //  std::cout << "without size vector the position is " << p << std::endl;
     int count = 0;
     size_t x = sizes[0];
     fwrite(&sizes[0], sizeof(size_t), 1, f);
@@ -1228,8 +1159,8 @@ int write_sizes(const std::vector<size_t>& sizes, FILE* f) {
 
     fwrite(&p, sizeof(int), 1, f);
     p = ftell(f);
-    std::cout << "with size vector the position is now " << p << std::endl;
-    std::cout << "wrote " << count << " sizes\n";
+    // std::cout << "with size vector the position is now " << p << std::endl;
+    // std::cout << "wrote " << count << " sizes\n";
     return 0;
 }
 

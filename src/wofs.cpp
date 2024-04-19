@@ -202,18 +202,19 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         } else {
             ret = readEncImage(fd, totalsize, keyhash, (unsigned char*)buf, found->getMeta().getStart() + offset, s);
         }
-        
-        if (ret != 0) {
-            std::cout << "error reading compressed image\n";
+        if (ret < 0) {
+            std::cout << "error reading image\n";
             return ret;
         }
         return s;
     }
-
     if (compressed) {
-        
-        
-
+        std::cout << "reading compressed file\n";
+        int ret = readComImage(fd, totalsize, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
+        if (ret < 0) {
+            std::cout << "error reading compressed image\n";
+            return ret;
+        }
     } else {
         fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
 
@@ -530,15 +531,15 @@ int handle_mount_command(int argc, char* argv[]) {
                 std::pair<std::vector<Meta>, std::vector<size_t> > pair = readAllMetaAndSize(imageFile);
                 metaList = pair.first;
                 sizes = pair.second;
-                for (int i = 0; i < metaList.size(); i++) {
-                    std::cout << "meta no. " << i << ": \n";
-                    std::cout << metaList[i].getName() << std::endl;
-                }
-                std::cout << "found " << sizes.size() << " compressed blocks\n";
-                for (int i = 0; i < sizes.size(); i++) {
+                // for (int i = 0; i < metaList.size(); i++) {
+                //     std::cout << "meta no. " << i << ": \n";
+                //     std::cout << metaList[i].getName() << std::endl;
+                // }
+                // std::cout << "found " << sizes.size() << " compressed blocks\n";
+                // for (int i = 0; i < sizes.size(); i++) {
 
-                    std::cout << sizes[i] << std::endl;
-                }
+                //     std::cout << sizes[i] << std::endl;
+                // }
             } catch (const std::exception& e) {
                 std::cerr << e.what() << std::endl;
                 return EXIT_FAILURE;
