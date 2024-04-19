@@ -134,7 +134,9 @@ int decrypt(int fd, size_t totalsize, unsigned char* keyhash, size_t st_blk, siz
 // int getImageSize(const std::string& path);
 
 size_t readEncImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t begin, size_t len);
+size_t readComImage(int fd, size_t totalsize, unsigned char* buffer, size_t offset, size_t s, std::vector<size_t>& sizes, int bef);
 size_t readEncComImage(int fd, size_t totalsize, unsigned char* keyhash, unsigned char* buffer, size_t offset, size_t s, std::vector<size_t>& sizes, int bef);
+
 std::vector<Meta> readEncMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
 
 int verify(FILE* f, unsigned char* keyhash);
@@ -146,3 +148,5 @@ int generateCompressedImage(const std::string& directory, const std::string& ima
 std::vector<Meta> readEncComMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
 
 std::pair<std::vector<Meta>, std::vector<size_t> > parseEncCompMeta(int fd, size_t totalsize, FILE* f, unsigned char* keyhash);
+
+std::pair<std::vector<Meta>, std::vector<size_t> > readAllMetaAndSize(FILE* f);

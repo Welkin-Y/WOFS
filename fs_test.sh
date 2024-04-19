@@ -31,7 +31,6 @@ echo "compare file structure"
 if diff -r d0 mountpoint; then
     echo "Data test completed successfully: No differences found."
     umount mountpoint
-    cat wofs.log
     exit 0
 else
     echo "Test failed: Differences found."

@@ -6,7 +6,7 @@
 #endif
 
 #define UNSUPPORTED -1
-#define VERSION "0.9: make image, mount, working fs"
+#define VERSION "1.0: make image, mount, working fs with encryption and compression"
 
 #include "log.h"
 #include "utils.hpp"
@@ -17,6 +17,7 @@ std::vector<size_t> sizes;
 FILE* imageFile;
 std::string imgPath;
 bool encrypted = false;
+bool compressed = false;
 int aes_blk_size = 32;
 int chunk_size = 1024;
 int fd = -1;
@@ -38,8 +39,11 @@ int wo_make_image(const char* path, const char* image_path) {
 
     fprintf(stderr, "making image from %s to %s\n", path, image_path);
     if (encrypted) {
-        generateCompressedImage(path, image_path);
-
+        if (compressed) {
+            generateCompressedImage(path, image_path);
+        } else {
+            generateImage(path, image_path);
+        }
         std::string key;
         std::cout << "Enter the key: ";
         if (system("stty -echo") != 0) {
@@ -57,8 +61,13 @@ int wo_make_image(const char* path, const char* image_path) {
         remove(image_path);
         return EXIT_SUCCESS;
     }
-    generateImage(path, image_path);
+    if(compressed){
+        generateCompressedImage(path, image_path);
+    } else {
+        generateImage(path, image_path);
+    }
     encrypted = false; //reset encryption flag
+    compressed = false; //reset compression flag
     return EXIT_SUCCESS;
 }
 
@@ -155,8 +164,6 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
     if (encrypted) {
         log_msg("encrypted wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
             path, buf, size, offset, fi);
-
-
     }
     else {
         log_msg("wo_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
@@ -189,20 +196,34 @@ int wo_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_
         log_msg("size: %ld\n", s);
 
         unsigned char* temp = (unsigned char*)malloc(s);
-        int ret = readEncComImage(fd, totalsize, keyhash, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
+        int ret = -1;
+        if (compressed) {
+            ret = readEncComImage(fd, totalsize, keyhash, (unsigned char*)buf, offset, s, sizes, found->getMeta().getNumBlocks());
+        } else {
+            ret = readEncImage(fd, totalsize, keyhash, (unsigned char*)buf, found->getMeta().getStart() + offset, s);
+        }
+        
         if (ret != 0) {
             std::cout << "error reading compressed image\n";
             return ret;
         }
         return s;
     }
-    fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
 
-    size_t r = fread(buf, 1, s, imageFile);
-    std::cout << "read " << r << " bytes\n";
-    return r;
-    // log_msg("%s\n",buf);
-    // return found->getMeta().getSize();
+    if (compressed) {
+        
+        
+
+    } else {
+        fseek(imageFile, found->getMeta().getStart() + offset, SEEK_SET);
+
+        size_t r = fread(buf, 1, s, imageFile);
+        std::cout << "read " << r << " bytes\n";
+        return r;
+        // log_msg("%s\n",buf);
+        // return found->getMeta().getSize();
+    }
+
 }
 
 int wo_readdir(const char* path,
@@ -322,6 +343,7 @@ void wo_gen_usage() {
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -h,  --help           Print this help\n");
     fprintf(stderr, "  -e,  --encrypt        Use password for image generation\n");
+    fprintf(stderr, "  -c,  --compress       Compress the image\n");
 }
 
 void wo_mount_usage() {
@@ -329,13 +351,14 @@ void wo_mount_usage() {
     fprintf(stderr, "  wofs mount [options] <image file> <mount point> Mount an image\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -h,  --help           Print this help\n");
-    fprintf(stderr, "  -d,  --decrypt        Use password for image generation\n");
+    fprintf(stderr, "  -e,  --encrypt        Use password for image generation\n");
+    fprintf(stderr, "  -c,  --compress       Compress the image\n");
 }
 
 void wo_usage() {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  -h  --help            Print this help\n");
-    fprintf(stderr, "  -v  --version         Print version information\n");
+    fprintf(stderr, "  -h,  --help            Print this help\n");
+    fprintf(stderr, "  -v,  --version         Print version information\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  gen                   Generate an wofs image from a directory\n");
     fprintf(stderr, "  mount                 Mount an wofs image to a directory\n");
@@ -350,6 +373,9 @@ int handle_gen_command(int argc, char* argv[]) {
     for (int i = 2; i < argc - 2; i++) { // Skip command and last two arguments (directory and image file)
         if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--encrypt") == 0) {
             encrypted = true;
+        }
+        else if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--compress") == 0) {
+            compressed = true;
         }
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             wo_gen_usage();
@@ -367,8 +393,8 @@ int handle_gen_command(int argc, char* argv[]) {
     char* imageFilePath = argv[argc - 1];
 
     // Info
-    printf("Generating image from directory '%s' to file '%s'. Encryption: %s\n",
-        directory, imageFilePath, encrypted ? "enabled" : "disabled");
+    printf("Generating image from directory '%s' to file '%s'.\nEncryption: %s\nCompress: %s\n",
+        directory, imageFilePath, encrypted ? "enabled" : "disabled", compressed ? "enabled" : "disabled");
     wo_make_image(directory, imageFilePath);
     return EXIT_SUCCESS;
 }
@@ -392,6 +418,16 @@ int handle_mount_command(int argc, char* argv[]) {
                 argv[j] = argv[j + 1];
             }
             argv[argc] = NULL;
+            i--;
+        }
+        else if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--compress") == 0) {
+            compressed = true;
+            argc--;
+            for (int j = i; j < argc; j++) {
+                argv[j] = argv[j + 1];
+            }
+            argv[argc] = NULL;
+            i--;
         }
     }
 
@@ -446,34 +482,69 @@ int handle_mount_command(int argc, char* argv[]) {
         totalsize = ftell(imageFile);
         fseek(imageFile, 0, SEEK_SET);
         fd = fileno(imageFile);
-        try {
-            std::pair<std::vector<Meta>, std::vector<size_t> > pair = parseEncCompMeta(fd, totalsize, imageFile, keyhash);
-            metaList = pair.first;
-            sizes = pair.second;
-            // for (int i = 0; i < metaList.size(); i++) {
-            //     std::cout << "meta no. " << i << ": \n";
-            //     std::cout << metaList[i].getName() << std::endl;
-            // }
-            // std::cout << "found " << sizes.size() << " compressed blocks\n";
-            // for (int i = 0; i < sizes.size(); i++) {
+        if (compressed) {
+            try {
+                std::pair<std::vector<Meta>, std::vector<size_t> > pair = parseEncCompMeta(fd, totalsize, imageFile, keyhash);
+                metaList = pair.first;
+                sizes = pair.second;
+                // for (int i = 0; i < metaList.size(); i++) {
+                //     std::cout << "meta no. " << i << ": \n";
+                //     std::cout << metaList[i].getName() << std::endl;
+                // }
+                // std::cout << "found " << sizes.size() << " compressed blocks\n";
+                // for (int i = 0; i < sizes.size(); i++) {
 
-            //     std::cout << sizes[i] << std::endl;
-            // }
-        }
-        catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            return EXIT_FAILURE;
+                //     std::cout << sizes[i] << std::endl;
+                // }
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+        } else {
+            try {
+                metaList = readEncMeta(fd, totalsize, imageFile, keyhash);
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
         }
         imageFile = fopen(wo_data->rootdir, "rb");
-    }
-    else {
+    } else {
         imageFile = fopen(wo_data->rootdir, "rb");
 
         if (imageFile == nullptr) {
             perror("Error: Cannot open the image file for file system\n");
             return EXIT_FAILURE;
         }
-        metaList = readAllMeta(imageFile);
+        
+        fseek(imageFile, 0, SEEK_END);
+        totalsize = ftell(imageFile);
+        fseek(imageFile, 0, SEEK_SET);
+        fd = fileno(imageFile);
+
+        if (!compressed) {
+            metaList = readAllMeta(imageFile);
+        } else {
+            try {
+                std::pair<std::vector<Meta>, std::vector<size_t> > pair = readAllMetaAndSize(imageFile);
+                metaList = pair.first;
+                sizes = pair.second;
+                for (int i = 0; i < metaList.size(); i++) {
+                    std::cout << "meta no. " << i << ": \n";
+                    std::cout << metaList[i].getName() << std::endl;
+                }
+                std::cout << "found " << sizes.size() << " compressed blocks\n";
+                for (int i = 0; i < sizes.size(); i++) {
+
+                    std::cout << sizes[i] << std::endl;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+        
     }
     // std::cout << "Found " << metaList.size() << " meta data\n";
     root_node = generateTree(metaList);
